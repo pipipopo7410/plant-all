@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>植物生理學：維管束與水分運輸</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body, html { 
+            margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #f1f5f9; 
+        }
+        
+        #global-layout { display: flex; flex-direction: column; width: 100%; height: 100%; }
+
+        #app-container { 
+            display: grid; grid-template-columns: 320px 1fr; gap: 20px; 
+            width: 100%; flex: 1; min-height: 0; padding: 20px; box-sizing: border-box; 
+        }
+
+        #left-sidebar { display: flex; flex-direction: column; gap: 15px; height: 100%; }
+        .panel-block {
+            background: white; border: 1px solid #e2e8f0; border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); padding: 20px;
+        }
+
+        input[type=range] { accent-color: #3B82F6; height: 6px; cursor: pointer; width: 100%; transition: all 0.3s;}
+        .slider-group { transition: all 0.5s ease; }
+        .slider-group.disabled { opacity: 0.3; filter: grayscale(100%); pointer-events: none; }
+        
+        .weather-btn { background: #f8fafc; border: 1px solid #cbd5e1; color: #475569; transition: all 0.2s; font-weight: bold; padding: 10px 0; border-radius: 8px; width: 100%; }
+        .weather-btn:hover { background: #e2e8f0; }
+        .weather-btn.active { background: #3B82F6; color: white; border-color: #2563EB; box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
+
+        #stage-wrapper {
+            position: relative; display: flex; justify-content: center; align-items: center;
+            width: 100%; height: 100%; border-radius: 16px; overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.05); transition: background-color 0.8s ease;
+        }
+        
+        #stage { position: relative; aspect-ratio: 4 / 3; width: 100%; height: 100%; max-width: 100%; max-height: 100%; }
+        
+        #bg-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 1; }
+        #bg-withered { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 2; opacity: 0; transition: opacity 0.5s ease; }
+        #sim-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 3; pointer-events: auto; } 
+
+        #celestial-body { position: absolute; top: 20px; right: 30px; font-size: 4.5rem; transition: transform 0.8s ease, filter 0.8s ease, opacity 0.8s ease; pointer-events: none; z-index: 10; }
+
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-15px) rotate(-2deg); } 75% { transform: translateX(15px) rotate(2deg); } }
+        .animate-shake { animation: shake 0.4s ease-in-out; }
+
+        #vertical-charts {
+            position: absolute; right: 4%; bottom: 8%; width: 380px; height: 340px;
+            background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(4px);
+            border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); border: 1px solid #e2e8f0;
+            display: flex; justify-content: space-around; align-items: flex-end; padding: 22px 18px; z-index: 20;
+            transition: opacity 0.5s;
+        }
+        .v-bar-container { width: 48px; height: 210px; background: #e2e8f0; border-radius: 8px; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end;}
+        .v-bar { width: 100%; transition: height 0.3s ease; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="select-none text-slate-800">
+
+    <div id="global-layout">
+        
+        <!-- 統一標準版頂部導覽列 (加入網頁跳轉) -->
+       <!-- 全站統一導覽列 -->
+        <nav id="nav-tabs-bar" class="w-full bg-slate-900 shadow-md h-14 flex items-center justify-between px-6 z-[100] flex-shrink-0 select-none">
+            <div class="flex items-center gap-3">
+                <span class="text-xl">🌱</span>
+                <span class="font-black text-lg text-white tracking-wider">會考總複習：植物大串聯</span>
+            </div>
+            
+            <div class="flex items-center gap-2" id="global-nav-buttons">
+                <button data-target="stage1.html" class="nav-btn px-4 py-1.5 rounded-lg text-sm font-bold text-slate-300 hover:bg-slate-800 transition-all">1. 植物系統分類</button>
+                <button data-target="stage2.html" class="nav-btn px-4 py-1.5 rounded-lg text-sm font-bold text-slate-300 hover:bg-slate-800 transition-all">2. 維管束與蒸散</button>
+                <button data-target="stage3.html" class="nav-btn px-4 py-1.5 rounded-lg text-sm font-bold text-slate-300 hover:bg-slate-800 transition-all">3. 光合與呼吸</button>
+                <button data-target="stage4.html" class="nav-btn px-4 py-1.5 rounded-lg text-sm font-bold text-slate-300 hover:bg-slate-800 transition-all">4. 開花與生殖</button>
+            </div>
+            <div id="nav-stage-subtitle" class="text-xs text-slate-400 font-mono"></div>
+        </nav>
+
+        <div id="alert-modal" class="opacity-0 pointer-events-none fixed top-[45%] left-[55%] transform -translate-x-1/2 -translate-y-1/2 z-50 px-12 py-8 rounded-3xl shadow-[0_20px_50px_rgba(220,38,38,0.4)] font-bold text-4xl tracking-wide border-4 border-red-500 text-red-600 text-center transition-opacity duration-500 flex flex-col items-center gap-4 bg-white">
+            <span class="text-7xl drop-shadow-md">⚠️</span>
+            <span id="alert-msg">植物快要缺水啦<br><span class="text-3xl mt-3 block text-slate-700">準備啟動保命機制！</span></span>
+        </div>
+
+        <div id="app-container">
+            
+            <div id="left-sidebar">
+                <div class="panel-block text-center flex-shrink-0 flex flex-col gap-4">
+                    <div class="grid grid-cols-2 gap-4 mt-1">
+                        <div class="border-r border-slate-200 flex flex-col items-center justify-center">
+                            <div id="stoma-label" class="text-xs text-slate-400 mb-1 font-bold">氣孔開啟</div>
+                            <div id="stoma-text" class="text-5xl font-bold text-emerald-500 transition-colors duration-300">80%</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-500 mb-1 font-bold">蒸散速率</div>
+                            <div class="flex items-baseline justify-center gap-1">
+                                <div id="rate-text" class="text-5xl font-bold text-blue-500">0.0</div>
+                                <div class="text-xs text-slate-400">L/hr</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="sys-status" class="text-center text-sm font-bold text-blue-600 mt-2 h-5 transition-colors">
+                        ⏸️ 觀察環境，準備開始
+                    </div>
+                </div>
+
+                <div class="panel-block flex-1 flex flex-col overflow-y-auto justify-between">
+                    <div class="flex flex-col gap-16 mt-4">
+                        <div id="group-light" class="slider-group flex flex-col gap-2">
+                            <div class="flex justify-between text-sm font-bold">
+                                <span class="text-slate-700">☀️ 光照強度</span><span id="val-light" class="text-blue-600">80%</span>
+                            </div>
+                            <input type="range" id="slider-light" min="0" max="100" value="80">
+                        </div>
+
+                        <div id="group-humid" class="slider-group disabled flex flex-col gap-2">
+                            <div class="flex justify-between items-end text-sm font-bold">
+                                <span class="text-slate-700">💧 空氣濕度</span>
+                                <div class="text-right">
+                                    <span id="val-humidity" class="text-blue-600">50%</span>
+                                    <span id="val-vol" class="text-[10px] text-slate-400 font-normal ml-1">(佔全部空氣 1.56%)</span>
+                                </div>
+                            </div>
+                            <input type="range" id="slider-humidity" min="0" max="100" value="50">
+                        </div>
+
+                        <div id="group-soil" class="slider-group disabled flex flex-col gap-2">
+                            <div class="flex justify-between text-sm font-bold">
+                                <span class="text-slate-700">🌱 土壤水量</span><span id="val-soil" class="text-blue-600">50%</span>
+                            </div>
+                            <input type="range" id="slider-soil" min="0" max="100" value="50">
+                        </div>
+                    </div>
+
+                    <div id="group-weather" class="slider-group disabled grid grid-cols-3 gap-2 mt-4">
+                        <button id="btn-roothair" class="weather-btn active col-span-3 mb-2 tracking-wide text-sm bg-[#10B981] text-white border-[#059669] shadow-[0_4px_12px_rgba(16,185,129,0.3)]">拔掉根毛</button>
+                        <button id="btn-sunny" class="weather-btn text-sm">☀️ 烈日</button>
+                        <button id="btn-rain" class="weather-btn text-sm">🌧️ 陰雨</button>
+                        <button id="btn-wind" class="weather-btn text-sm">💨 強風</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="stage-wrapper">
+                <div id="stage">
+                    <div id="celestial-body">☀️</div>
+                    <img id="bg-image" src="02.PNG" alt="植物底圖" onerror="this.src='01.PNG'">
+                    <img id="bg-withered" src="03.png" alt="枯萎圖" onerror="this.style.display='none'">
+                    
+                    <div id="vertical-charts">
+                        <div class="flex flex-col items-center justify-end h-full w-full">
+                            <div class="text-[18px] font-bold text-slate-600 mb-3 flex flex-col items-center">
+                                <span>吸水</span>
+                                <span id="txt-input" class="text-[15px] text-blue-600 mt-1">適中</span>
+                            </div>
+                            <div class="v-bar-container"><div id="bar-input" class="v-bar bg-blue-500" style="height: 50%"></div></div>
+                        </div>
+                        <div class="flex flex-col items-center justify-end h-full w-full">
+                            <div class="text-[18px] font-bold text-slate-600 mb-3 flex flex-col items-center">
+                                <span>蒸散</span>
+                                <span id="txt-output" class="text-[15px] text-emerald-600 mt-1">適中</span>
+                            </div>
+                            <div class="v-bar-container"><div id="bar-output" class="v-bar bg-emerald-400" style="height: 64%"></div></div>
+                        </div>
+                        
+                        <div id="tree-water-container" class="opacity-0 transition-opacity duration-500 flex flex-col items-center justify-end h-full w-full">
+                            <div class="text-[18px] font-bold text-slate-600 mb-3 flex flex-col items-center">
+                                <span>體內水分</span>
+                            </div>
+                            <div class="bg-transparent relative flex justify-center items-center" style="width:150px; height: 240px;">
+                                <!-- ★ 全新重繪的茂密大樹，絕對不變形 -->
+                                <svg viewBox="0 0 100 120" class="absolute bottom-0 w-full h-full drop-shadow-lg" preserveAspectRatio="xMidYMax meet">
+                                    <path d="M 50 5 C 30 5 20 15 20 30 C 5 35 5 55 18 60 C 15 70 25 75 35 70 L 43 65 C 43 85 38 105 30 115 L 70 115 C 62 105 57 85 57 65 L 65 70 C 75 75 85 70 82 60 C 95 55 95 35 80 30 C 80 15 70 5 50 5 Z" fill="#e2e8f0"/>
+                                    <g clip-path="url(#water-clip)">
+                                        <path d="M 50 5 C 30 5 20 15 20 30 C 5 35 5 55 18 60 C 15 70 25 75 35 70 L 43 65 C 43 85 38 105 30 115 L 70 115 C 62 105 57 85 57 65 L 65 70 C 75 75 85 70 82 60 C 95 55 95 35 80 30 C 80 15 70 5 50 5 Z" fill="#3b82f6"/>
+                                    </g>
+                                    <clipPath id="water-clip"><rect id="tree-water-rect" x="0" y="24" width="100" height="120"/></clipPath>
+                                </svg>
+                                <!-- ★ 動態百分比數字 -->
+                                <span id="tree-water-percent" class="absolute text-2xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-10" style="top: 45%;">80%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <canvas id="sim-canvas"></canvas>
+                    
+                    <div class="absolute top-20 left-1/2 transform -translate-x-1/2 z-40 flex flex-col items-center gap-4">
+                        <button id="btn-start" onclick="startSimulation()" class="px-12 py-5 bg-blue-500 text-white font-extrabold text-3xl rounded-full shadow-2xl hover:bg-blue-600 hover:scale-105 transition-all animate-bounce">
+                            ▶ 開始蒸散
+                        </button>
+                        <button id="btn-step2" onclick="startStep2()" class="hidden px-10 py-5 bg-indigo-500 text-white font-bold text-2xl rounded-full shadow-2xl hover:bg-indigo-600 transition-all border-4 border-white animate-pulse">
+                            除了光，還有什麼因素也會影響氣孔開啟嗎？
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const DOM = {
+            canvas: document.getElementById('sim-canvas'),
+            stage: document.getElementById('stage'),
+            stageWrapper: document.getElementById('stage-wrapper'),
+            bgImage: document.getElementById('bg-image'),
+            bgWithered: document.getElementById('bg-withered'),
+            celestial: document.getElementById('celestial-body'),
+            sLight: document.getElementById('slider-light'),
+            sHumid: document.getElementById('slider-humidity'),
+            sSoil: document.getElementById('slider-soil'),
+            valLight: document.getElementById('val-light'),
+            valHumid: document.getElementById('val-humidity'),
+            valSoil: document.getElementById('val-soil'),
+            valVol: document.getElementById('val-vol'),
+            stomaLabel: document.getElementById('stoma-label'),
+            stomaText: document.getElementById('stoma-text'),
+            rateText: document.getElementById('rate-text'),
+            sysStatus: document.getElementById('sys-status'),
+            barInput: document.getElementById('bar-input'),
+            txtInput: document.getElementById('txt-input'),
+            barOutput: document.getElementById('bar-output'),
+            txtOutput: document.getElementById('txt-output'),
+            treeWaterContainer: document.getElementById('tree-water-container'),
+            treeWaterRect: document.getElementById('tree-water-rect'),
+            treeWaterPercent: document.getElementById('tree-water-percent'),
+            btnRoot: document.getElementById('btn-roothair'),
+            alertModal: document.getElementById('alert-modal'),
+            alertMsg: document.getElementById('alert-msg'),
+            groupLight: document.getElementById('group-light'),
+            groupSoil: document.getElementById('group-soil'),
+            groupHumid: document.getElementById('group-humid'),
+            groupWeather: document.getElementById('group-weather'),
+            btnStart: document.getElementById('btn-start'),
+            btnStep2: document.getElementById('btn-step2')
+        };
+        const ctx = DOM.canvas.getContext('2d');
+
+        let hasStarted = false;
+        let pullBoost = 1.0; 
+        
+        const WATER_BASELINE = 80;
+        let internalWaterLevel = WATER_BASELINE; 
+        
+        let waterState = 'NORMAL'; 
+        let warningTimer = 0; 
+
+        let config = { light: 80, humidity: 50, soil: 50 }; 
+        let activeWeather = 'none';
+        let hasRootHair = true;
+        let rootHairCycleIdx = 0; 
+        let lastEnvColor = ''; 
+
+        let m1Step = 1; 
+        let hasSeenDay = false;
+        let hasSeenNight = false;
+
+        let cloudOffsetY = -0.3; 
+
+        let ambientAirParticles = [];
+        let soilStaticPositions = []; 
+        let rootAbsorbParticles = []; 
+        let evapParticles = [], rainParticles = [];
+        
+        let mainBeads = [];   
+        let branchBeads = []; 
+        let branchCounter = 0; 
+
+        let stomaRatio = 0.8; 
+
+        const NOMINAL_SPACING = 0.015; 
+        let spawnAccumulator = 0; 
+        let guttationSize = 0;
+        
+        const trunkPoints = [{x: 0.273, y: 0.957}, {x: 0.243, y: 0.904}, {x: 0.211, y: 0.864}, {x: 0.186, y: 0.803}, {x: 0.191, y: 0.765}, {x: 0.166, y: 0.539}];
+        const leafBranch = [{x: 0.213, y: 0.487}, {x: 0.293, y: 0.441}, {x: 0.386, y: 0.403}, {x: 0.459, y: 0.393}];
+        const mainPathPts = [...trunkPoints, ...leafBranch];
+        
+        const sharedBranchPts = [{x: 0.166, y: 0.539}, {x: 0.151, y: 0.339}]; 
+        const fruitBranchPts = [{x: 0.151, y: 0.339}, {x: 0.231, y: 0.194}, {x: 0.248, y: 0.282}];
+        const flowerBranchPts = [{x: 0.151, y: 0.339}, {x: 0.123, y: 0.169}];
+
+        const stomataPos = [{x: 0.470, y: 0.423}, {x: 0.482, y: 0.409}, {x: 0.474, y: 0.371}, {x: 0.489, y: 0.346}, {x: 0.502, y: 0.373}, {x: 0.522, y: 0.346}, {x: 0.502, y: 0.437}, {x: 0.514, y: 0.407}, {x: 0.542, y: 0.430}, {x: 0.555, y: 0.414}, {x: 0.540, y: 0.361}, {x: 0.568, y: 0.379}, {x: 0.575, y: 0.398}];
+        const stomaOrder = [6, 2, 9, 0, 12, 4, 10, 1, 8, 5, 11, 3, 7]; 
+
+        const rootNodes = [
+            {x: 0.254, y: 0.845}, {x: 0.336, y: 0.851}, {x: 0.171, y: 0.869}, {x: 0.175, y: 0.941}, 
+            {x: 0.093, y: 0.936}, {x: 0.135, y: 0.873}, {x: 0.081, y: 0.805}, {x: 0.013, y: 0.831},
+            {x: 0.280, y: 0.980}, {x: 0.320, y: 0.990}, {x: 0.350, y: 0.960}, {x: 0.240, y: 0.970} 
+        ];
+
+        const guttationDrops = [
+            {x: 0.530, y: 0.333}, {x: 0.554, y: 0.350}, {x: 0.577, y: 0.366}, {x: 0.603, y: 0.398}, 
+            {x: 0.588, y: 0.417}, {x: 0.568, y: 0.433}, {x: 0.545, y: 0.451}, {x: 0.509, y: 0.457}
+        ];
+
+        function calcPathLengths(pts) {
+            let lens = [0], total = 0;
+            for(let i=1; i<pts.length; i++){ total += Math.hypot(pts[i].x-pts[i-1].x, pts[i].y-pts[i-1].y); lens.push(total); }
+            return { lens, total };
+        }
+        let mainData = calcPathLengths(mainPathPts);
+        let sharedData = calcPathLengths(sharedBranchPts);
+        let fruitData = calcPathLengths(fruitBranchPts);
+        let flowerData = calcPathLengths(flowerBranchPts);
+
+        function getPoint(pts, data, d) {
+            if (d < 0) {
+                let dx = pts[1].x - pts[0].x;
+                let dy = pts[1].y - pts[0].y;
+                let len = data.lens[1] || 0.001; 
+                let r = d / len;
+                return { x: pts[0].x + dx * r, y: pts[0].y + dy * r };
+            }
+            if (d >= data.total) return pts[pts.length - 1];
+            for(let i=1; i<data.lens.length; i++) {
+                if (d <= data.lens[i]) {
+                    let prevD = data.lens[i-1];
+                    let r = (d - prevD) / (data.lens[i] - prevD);
+                    return { x: pts[i-1].x + (pts[i].x - pts[i-1].x) * r, y: pts[i-1].y + (pts[i].y - pts[i-1].y) * r };
+                }
+            }
+            return pts[pts.length - 1];
+        }
+
+        function drawFlatCloud(ctx, x, y, scale) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(scale, scale);
+            ctx.fillStyle = '#b8c9d6';
+            ctx.beginPath();
+            ctx.arc(-30, 10, 30, 0, Math.PI*2);
+            ctx.arc(10, -20, 45, 0, Math.PI*2);
+            ctx.arc(50, 10, 35, 0, Math.PI*2);
+            ctx.rect(-30, 0, 80, 40);
+            ctx.fill();
+            ctx.fillStyle = '#e2e8f0';
+            ctx.beginPath();
+            ctx.arc(-25, 15, 25, 0, Math.PI*2);
+            ctx.arc(10, -10, 40, 0, Math.PI*2);
+            ctx.arc(45, 15, 30, 0, Math.PI*2);
+            ctx.rect(-25, 5, 70, 35);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function initSoilPositions() {
+            soilStaticPositions = [];
+            for(let i=0; i<800; i++) {
+                soilStaticPositions.push({ x: Math.random(), y: 0.79 + Math.random() * 0.21, size: 0.5 + Math.random() * 0.8 });
+            }
+        }
+
+        function initBeads() {
+            mainBeads = []; branchBeads = [];
+            for (let d = mainData.total; d >= 0; d -= NOMINAL_SPACING) mainBeads.push({d: d});
+            let maxBranchLen = sharedData.total + Math.max(fruitData.total, flowerData.total);
+            for (let d = maxBranchLen; d >= 0; d -= NOMINAL_SPACING * 1.5) {
+                branchBeads.push({d: d, targetD: d});
+            }
+        }
+
+        function isPointInTree(nx, ny) {
+            let cx = 0.30, cy = 0.35, r = 0.25; 
+            if (Math.hypot(nx-cx, ny-cy) < r) return true; 
+            if (nx > 0.15 && nx < 0.35 && ny >= 0.50 && ny < 0.8) return true; 
+            return false;
+        }
+
+        function resizeCanvas() {
+            DOM.canvas.width = DOM.stage.clientWidth;
+            DOM.canvas.height = DOM.stage.clientHeight;
+            ambientAirParticles = [];
+            initSoilPositions();
+            initBeads(); 
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        window.startSimulation = function() {
+            hasStarted = true;
+            pullBoost = 6.0; 
+            DOM.btnStart.classList.add('hidden');
+            DOM.sysStatus.innerText = "☀️ 氣孔開啟受光照影響";
+        }
+
+        window.startStep2 = function() {
+            m1Step = 2;
+            DOM.btnStep2.classList.add('hidden');
+            DOM.sLight.value = 80; DOM.sLight.disabled = true; DOM.groupLight.classList.add('disabled');
+            DOM.groupSoil.classList.remove('disabled'); DOM.sSoil.disabled = false;
+            DOM.groupHumid.classList.remove('disabled'); DOM.sHumid.disabled = false;
+            DOM.groupWeather.classList.remove('disabled');
+            DOM.treeWaterContainer.classList.replace('opacity-0', 'opacity-100');
+        }
+
+        function applySliderStates() {
+            let lockAll = (activeWeather !== 'none');
+            if (m1Step === 1) {
+                DOM.sLight.disabled = lockAll; DOM.groupLight.className = `slider-group flex flex-col gap-2 ${lockAll ? 'disabled' : ''}`;
+                DOM.sSoil.disabled = true; DOM.groupSoil.className = 'slider-group disabled flex flex-col gap-2';
+                DOM.sHumid.disabled = true; DOM.groupHumid.className = 'slider-group disabled flex flex-col gap-2';
+            } else {
+                DOM.sLight.disabled = true; DOM.groupLight.className = 'slider-group disabled flex flex-col gap-2';
+                DOM.sSoil.disabled = lockAll; DOM.groupSoil.className = `slider-group flex flex-col gap-2 ${lockAll ? 'disabled' : ''}`;
+                DOM.sHumid.disabled = lockAll; DOM.groupHumid.className = `slider-group flex flex-col gap-2 ${lockAll ? 'disabled' : ''}`;
+            }
+        }
+
+        window.switchMode = function(mode) {
+            // 模式簡化，功能保留避免報錯
+        };
+
+        DOM.btnRoot.onclick = () => {
+            hasRootHair = !hasRootHair;
+            DOM.btnRoot.innerText = hasRootHair ? '拔掉根毛' : '長回根毛';
+            if (hasRootHair) {
+                DOM.btnRoot.classList.add('active', 'bg-[#10B981]', 'text-white', 'border-[#059669]', 'shadow-[0_4px_12px_rgba(16,185,129,0.3)]');
+                DOM.btnRoot.classList.remove('bg-slate-200', 'text-slate-500', 'border-slate-400');
+            } else {
+                DOM.btnRoot.classList.remove('active', 'bg-[#10B981]', 'text-white', 'border-[#059669]', 'shadow-[0_4px_12px_rgba(16,185,129,0.3)]');
+                DOM.btnRoot.classList.add('bg-slate-200', 'text-slate-500', 'border-slate-400');
+            }
+            DOM.bgImage.src = hasRootHair ? '02.PNG' : '01.PNG';
+        };
+
+        function setWeather(weather) {
+            ['sunny', 'rain', 'wind'].forEach(w => document.getElementById(`btn-${w}`).classList.remove('active'));
+            if (activeWeather === weather) { 
+                activeWeather = 'none'; 
+                DOM.sLight.value = 80; DOM.sHumid.value = 50; DOM.sSoil.value = 50;
+            } else {
+                activeWeather = weather;
+                document.getElementById(`btn-${weather}`).classList.add('active');
+                if(weather === 'sunny') { DOM.sLight.value = 100; DOM.sHumid.value = 30; DOM.sSoil.value = 50; }
+                if(weather === 'rain') { DOM.sLight.value = 50; DOM.sHumid.value = 90; DOM.sSoil.value = 90; }
+                if(weather === 'wind') { DOM.sLight.value = 80; DOM.sHumid.value = 40; DOM.sSoil.value = 60; }
+            }
+            
+            internalWaterLevel = WATER_BASELINE;
+            waterState = 'NORMAL';
+            warningTimer = 0;
+            stomaRatio = parseInt(DOM.sLight.value) / 100; 
+            applySliderStates();
+        }
+
+        document.getElementById('btn-sunny').onclick = () => setWeather('sunny');
+        document.getElementById('btn-rain').onclick = () => setWeather('rain');
+        document.getElementById('btn-wind').onclick = () => setWeather('wind');
+        
+        [DOM.sSoil, DOM.sHumid, DOM.sLight].forEach(s => s.addEventListener('input', () => {
+            activeWeather = 'none';
+            ['sunny', 'rain', 'wind'].forEach(w => document.getElementById(`btn-${w}`).classList.remove('active'));
+            applySliderStates();
+        }));
+
+        let lastTime = 0;
+        
+        function animate(timestamp) {
+            let dt = timestamp - lastTime;
+            lastTime = timestamp;
+            if (dt > 100) dt = 16; 
+            
+            if(!DOM.canvas.width || !DOM.canvas.height) { requestAnimationFrame(animate); return; }
+            let w = DOM.canvas.width, h = DOM.canvas.height;
+            ctx.clearRect(0, 0, w, h);
+
+            config.light = parseInt(DOM.sLight.value); 
+            config.humidity = parseInt(DOM.sHumid.value);
+            config.soil = parseInt(DOM.sSoil.value);
+
+            DOM.valLight.innerText = `${config.light}%`;
+            DOM.valHumid.innerText = `${config.humidity}%`;
+            DOM.valVol.innerText = `(佔全部空氣 ${((config.humidity * 0.0313) || 1.56).toFixed(2)}%)`;
+            DOM.valSoil.innerText = `${config.soil}%`;
+
+            if (m1Step === 1 && hasStarted) {
+                if (config.light >= 80) hasSeenDay = true;
+                if (config.light <= 30) hasSeenNight = true;
+                if (hasSeenDay && hasSeenNight) DOM.btnStep2.classList.remove('hidden'); 
+            }
+
+            let currentEnv = config.light < 30 ? 'night' : 'day';
+            if (currentEnv !== lastEnvColor) {
+                DOM.celestial.innerText = currentEnv === 'night' ? '🌙' : '☀️';
+                DOM.stageWrapper.style.backgroundColor = currentEnv === 'night' ? '#1e1b4b' : '#e0e7ff';
+                lastEnvColor = currentEnv;
+            }
+            
+            if (activeWeather === 'sunny') {
+                DOM.celestial.style.transform = 'scale(3.5)'; 
+                DOM.celestial.style.filter = 'drop-shadow(0 0 120px rgba(255, 30, 0, 1)) drop-shadow(0 0 60px rgba(255, 60, 0, 0.9))';
+                DOM.celestial.style.opacity = 1;
+                DOM.stageWrapper.style.backgroundColor = '#fecaca'; 
+            } else if (activeWeather === 'rain' || activeWeather === 'wind') {
+                DOM.celestial.style.opacity = 0; 
+            } else {
+                DOM.celestial.style.transform = 'scale(1)';
+                if (currentEnv === 'night') {
+                    let mInt = (30 - config.light) / 30;
+                    DOM.celestial.style.opacity = 0.5 + (mInt * 0.5);
+                    DOM.celestial.style.filter = `drop-shadow(0 0 ${15 + mInt*10}px rgba(255,255,255,0.8))`;
+                } else {
+                    let sInt = (config.light - 30) / 70;
+                    DOM.celestial.style.opacity = 0.3 + (sInt * 0.7);
+                    DOM.celestial.style.filter = `drop-shadow(0 0 ${10 + sInt*30}px rgba(253, 224, 71, 1))`;
+                }
+            }
+
+            if (config.light < 50 && activeWeather !== 'sunny') { ctx.fillStyle = `rgba(10, 15, 30, ${((50 - config.light) / 50) * 0.6})`; ctx.fillRect(0, 0, w, h); }
+            if (config.light >= 30 && config.light <= 70 && activeWeather !== 'sunny') {
+                let dusk = 1 - Math.abs(config.light - 50) / 20; 
+                if (dusk > 0) { ctx.fillStyle = `rgba(251, 146, 60, ${dusk * 0.15})`; ctx.fillRect(0, 0, w, h); }
+            }
+
+            let supply = (config.soil / 100) * (hasRootHair ? 1.0 : 0.2); 
+            let vaporGrad = Math.max(0, (100 - config.humidity) / 100);
+            let windFactor = activeWeather === 'wind' ? 1.8 : 1.0;
+            let physicalDemand = 1.6 * (config.light / 100) * vaporGrad * windFactor; 
+
+            let stomaTarget = 1.0;
+            
+            if (hasStarted) {
+                let netFlow = supply - (stomaRatio * physicalDemand);
+                internalWaterLevel += netFlow * dt * 0.04; 
+                internalWaterLevel = Math.max(0, Math.min(100, internalWaterLevel));
+            }
+
+            // ★ 更新水位與百分比文字
+            DOM.treeWaterPercent.innerText = Math.round(internalWaterLevel) + '%';
+            // 公式： 115 - (level / 100) * (115 - 0) = 115 - level * 1.15
+            let currentY = 115 - (internalWaterLevel / 100) * 115;
+            DOM.treeWaterRect.setAttribute('y', currentY); 
+
+            if (m1Step === 1) {
+                stomaTarget = config.light / 100;
+                if (hasStarted) DOM.sysStatus.innerText = "☀️ 氣孔開啟受光照影響";
+                DOM.alertModal.classList.replace('opacity-100', 'opacity-0');
+            } else {
+                if (internalWaterLevel <= 15) {
+                    waterState = 'DANGER';
+                } else if (internalWaterLevel <= 30 && waterState === 'NORMAL') {
+                    if (waterState !== 'WARNING') {
+                        waterState = 'WARNING';
+                        warningTimer = 3500; 
+                    }
+                } else if (internalWaterLevel >= 80 && waterState === 'DANGER') {
+                    waterState = 'NORMAL';
+                } else if (internalWaterLevel >= 50 && waterState === 'WARNING' && warningTimer <= 0) {
+                    waterState = 'NORMAL';
+                }
+
+                if (warningTimer > 0) warningTimer -= dt;
+
+                if (waterState === 'DANGER') {
+                    DOM.alertModal.classList.replace('opacity-100', 'opacity-0'); 
+                    DOM.sysStatus.innerText = "🛑 缺水保護：精算回復 80% 所需開度";
+                    DOM.sysStatus.className = `text-center text-sm font-bold mt-2 h-5 transition-colors text-red-500`;
+                    
+                    let requiredNetFlow = (80 - internalWaterLevel) / 280;
+                    if (physicalDemand > 0) {
+                        stomaTarget = (supply - requiredNetFlow) / physicalDemand;
+                    } else {
+                        stomaTarget = config.light / 100;
+                    }
+                    stomaTarget = Math.max(0.05, Math.min(stomaTarget, config.light / 100));
+
+                } else if (waterState === 'WARNING' || warningTimer > 0) {
+                    DOM.alertModal.classList.replace('opacity-0', 'opacity-100');
+                    DOM.alertMsg.innerHTML = '⚠️ 水分流失過快！<br><span class="text-3xl mt-3 block text-slate-700">準備啟動保命機制！</span>';
+                    DOM.sysStatus.innerText = "⚠️ 水分嚴重流失中...";
+                    DOM.sysStatus.className = `text-center text-sm font-bold mt-2 h-5 transition-colors text-orange-500`;
+                    stomaTarget = config.light / 100; 
+                } else {
+                    DOM.alertModal.classList.replace('opacity-100', 'opacity-0');
+                    DOM.sysStatus.innerText = "🌿 內部水分充足：維持正常運作";
+                    DOM.sysStatus.className = `text-center text-sm font-bold mt-2 h-5 transition-colors text-blue-600`;
+                    stomaTarget = config.light / 100;
+                }
+            }
+            
+            let witherOpacity = 0;
+            if (internalWaterLevel < 30) witherOpacity = (30 - internalWaterLevel) / 30;
+            DOM.bgWithered.style.opacity = witherOpacity;
+
+            stomaRatio += (stomaTarget - stomaRatio) * 0.05;
+            stomaRatio = Math.max(0.05, Math.min(stomaRatio, 1.0));
+
+            let actualOutput = stomaRatio * physicalDemand;
+            
+            DOM.stomaText.innerText = `${Math.round(stomaRatio * 100)}%`;
+            let displayOutput = hasStarted ? Math.max(0.04, physicalDemand * stomaRatio) : 0;
+            DOM.rateText.innerText = hasStarted ? Math.max(0.3, actualOutput * 35).toFixed(1) : "0.0"; 
+            DOM.barInput.style.height = `${Math.min(100, Math.max(4, supply * 100))}%`;
+            DOM.barOutput.style.height = `${Math.min(100, Math.max(4, displayOutput * 100))}%`; 
+            DOM.txtInput.innerText = supply > 0.7 ? '吸水多' : (supply > 0.3 ? '適中' : '吸水少');
+            DOM.txtOutput.innerText = physicalDemand > 0.7 ? '蒸散多' : (physicalDemand > 0.3 ? '適中' : '蒸散少');
+
+            if (pullBoost > 1.0) pullBoost -= dt * 0.003; 
+            if (pullBoost < 1.0) pullBoost = 1.0;
+
+            let v_in = hasStarted ? supply * 0.0003 : 0; 
+            let speedMult = (m1Step === 1 && config.light > 50) ? 0.0006 : 0.0003;
+            let v_out = hasStarted ? actualOutput * speedMult * pullBoost : 0; 
+
+            if (m1Step === 1) v_in = Math.max(v_out, 0.00005); 
+
+            let numSoilDrops = Math.floor(config.soil * 8); 
+            ctx.fillStyle = 'rgba(147, 197, 253, 0.8)'; 
+            for(let i=0; i<numSoilDrops; i++) {
+                let p = soilStaticPositions[i];
+                ctx.beginPath(); ctx.arc(p.x * w, p.y * h, p.size * (w*0.0035), 0, Math.PI*2); ctx.fill();
+            }
+
+            rootHairCycleIdx = Math.floor(timestamp / 800) % rootNodes.length; 
+            let activeRoots = hasRootHair ? rootNodes : [rootNodes[rootHairCycleIdx]]; 
+            let spawnRate = hasRootHair ? supply * 0.2 : supply * 0.08;
+            
+            if (v_in > 0 && Math.random() < spawnRate) {
+                let rNode = activeRoots[Math.floor(Math.random() * activeRoots.length)];
+                rootAbsorbParticles.push({ 
+                    startX: rNode.x + (Math.random()-0.5)*0.08, 
+                    startY: rNode.y + 0.02 + Math.random()*0.05, 
+                    targetX: rNode.x, 
+                    targetY: rNode.y, 
+                    prog: 0 
+                });
+            }
+
+            ctx.fillStyle = '#FFFFFF'; 
+            for (let i = rootAbsorbParticles.length - 1; i >= 0; i--) {
+                let p = rootAbsorbParticles[i];
+                let dist = Math.hypot((p.targetX - p.startX)*w, (p.targetY - p.startY)*h) || 1;
+                p.prog += (w * 0.001) / dist;
+                let curX = p.startX + (p.targetX - p.startX) * p.prog;
+                let curY = p.startY + (p.targetY - p.startY) * p.prog;
+                ctx.beginPath(); ctx.arc(curX * w, curY * h, w * 0.0035, 0, Math.PI*2); ctx.fill();
+                if (p.prog >= 1) rootAbsorbParticles.splice(i, 1);
+            }
+
+            let targetAirCount = Math.floor((config.humidity === 100 ? 1.5 : config.humidity / 100) * 500);
+            if (activeWeather === 'sunny') targetAirCount = 0; 
+
+            while(ambientAirParticles.length < targetAirCount) {
+                let px = Math.random(), py = Math.random() * 0.85; 
+                if (!isPointInTree(px, py)) ambientAirParticles.push({ x: px, y: py, size: 2+Math.random()*2, vx: (Math.random()-0.5)*0.08, vy: (Math.random()-0.5)*0.08, alpha: 1.0 }); 
+                else break;
+            }
+            while(ambientAirParticles.length > targetAirCount && ambientAirParticles.length > 0) ambientAirParticles.pop();
+
+            ctx.fillStyle = 'rgba(96, 165, 250, 0.9)'; 
+            ambientAirParticles.forEach(p => {
+                p.x += (p.vx + (activeWeather === 'wind' ? 2.5 : 0)) / w; 
+                p.y += p.vy / h;
+                
+                if (activeWeather === 'sunny') {
+                    if (p.shrinkDelay === undefined) p.shrinkDelay = Math.random() * 2000;
+                    p.shrinkDelay -= dt;
+                    if (p.shrinkDelay <= 0) {
+                        p.size -= 0.01; 
+                        if(p.size < 0) p.alpha = 0;
+                    }
+                }
+
+                if (p.alpha > 0 && (p.x > 1.0 || p.x < 0 || p.y < 0 || p.y > 0.85 || isPointInTree(p.x, p.y))) {
+                    if (activeWeather !== 'sunny') {
+                        let attempts = 0;
+                        do { p.x = Math.random(); p.y = Math.random() * 0.85; attempts++; } while (isPointInTree(p.x, p.y) && attempts < 5);
+                    }
+                }
+                if (p.alpha > 0) {
+                    ctx.globalAlpha = p.alpha; ctx.beginPath(); ctx.arc(p.x * w, p.y * h, p.size, 0, Math.PI*2); ctx.fill(); 
+                }
+            });
+            ctx.globalAlpha = 1.0;
+            ambientAirParticles = ambientAirParticles.filter(p => p.alpha > 0);
+
+            // ================= ★ 單一維度映射 (無縫同步) =================
+            ctx.save();
+            ctx.beginPath(); ctx.moveTo(mainPathPts[0].x * w, mainPathPts[0].y * h);
+            for(let i=1; i<mainPathPts.length; i++) ctx.lineTo(mainPathPts[i].x * w, mainPathPts[i].y * h);
+            ctx.moveTo(sharedBranchPts[0].x * w, sharedBranchPts[0].y * h);
+            for(let i=1; i<sharedBranchPts.length; i++) ctx.lineTo(sharedBranchPts[i].x * w, sharedBranchPts[i].y * h);
+            ctx.moveTo(fruitBranchPts[0].x * w, fruitBranchPts[0].y * h);
+            for(let i=1; i<fruitBranchPts.length; i++) ctx.lineTo(fruitBranchPts[i].x * w, fruitBranchPts[i].y * h);
+            ctx.moveTo(flowerBranchPts[0].x * w, flowerBranchPts[0].y * h);
+            for(let i=1; i<flowerBranchPts.length; i++) ctx.lineTo(flowerBranchPts[i].x * w, flowerBranchPts[i].y * h);
+            ctx.strokeStyle = 'rgba(59, 130, 246, 0.4)'; ctx.lineWidth = w * 0.012; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke(); 
+
+            let pSize = w * 0.0045; 
+            
+            if (hasStarted) {
+                for (let i = 0; i < mainBeads.length; i++) {
+                    let b = mainBeads[i];
+                    let mySpeed = v_in; 
+                    if (i === 0) {
+                        mySpeed = Math.max(v_in, v_out); 
+                    } else {
+                        let ahead = mainBeads[i-1];
+                        let distToAhead = ahead.d - b.d;
+                        if (distToAhead > NOMINAL_SPACING) mySpeed += (distToAhead - NOMINAL_SPACING) * 0.2; 
+                    }
+                    b.d += mySpeed;
+                    if (i > 0) {
+                        let ahead = mainBeads[i-1];
+                        if (ahead.d - b.d < NOMINAL_SPACING) b.d = ahead.d - NOMINAL_SPACING;
+                    }
+                }
+                
+                while (mainBeads.length > 0 && mainBeads[0].d > mainData.total) {
+                    mainBeads.shift();
+                    branchCounter++;
+                    if (branchCounter % 3 === 0) {
+                        let PUSH_DIST = NOMINAL_SPACING * 1.5;
+                        for(let i=0; i<branchBeads.length; i++) branchBeads[i].targetD += PUSH_DIST;
+                        branchBeads.unshift({d: -PUSH_DIST, targetD: 0});
+                    }
+                }
+
+                if (v_in > 0) {
+                    spawnAccumulator += v_in;
+                    if (spawnAccumulator >= NOMINAL_SPACING) {
+                        let canSpawn = true;
+                        if (mainBeads.length > 0 && mainBeads[mainBeads.length - 1].d < NOMINAL_SPACING) canSpawn = false; 
+                        if (canSpawn) {
+                            mainBeads.push({d: 0});
+                            spawnAccumulator -= NOMINAL_SPACING;
+                        }
+                    }
+                } else { spawnAccumulator = 0; }
+                
+                // ★ 花果支線 3倍加速推擠 (0.45)
+                for (let i = 0; i < branchBeads.length; i++) {
+                    let b = branchBeads[i];
+                    if (b.d < b.targetD) b.d += (b.targetD - b.d) * 0.45; 
+                }
+                
+                let maxBranchLen = sharedData.total + Math.max(fruitData.total, flowerData.total);
+                while (branchBeads.length > 0 && branchBeads[branchBeads.length - 1].d > maxBranchLen) {
+                    branchBeads.pop();
+                }
+            }
+
+            ctx.fillStyle = '#2563EB'; ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)'; ctx.lineWidth = w * 0.001;
+            mainBeads.forEach(b => {
+                let pt = getPoint(mainPathPts, mainData, b.d);
+                ctx.beginPath(); ctx.arc(pt.x * w, pt.y * h, pSize, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+            });
+            
+            ctx.globalAlpha = 0.5;
+            branchBeads.forEach(b => {
+                if (b.d <= sharedData.total) {
+                    let pt = getPoint(sharedBranchPts, sharedData, b.d);
+                    ctx.beginPath(); ctx.arc(pt.x * w, pt.y * h, pSize, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                } else {
+                    let overflowD = b.d - sharedData.total;
+                    if (overflowD <= fruitData.total) {
+                        let pt1 = getPoint(fruitBranchPts, fruitData, overflowD);
+                        ctx.beginPath(); ctx.arc(pt1.x * w, pt1.y * h, pSize, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                    }
+                    if (overflowD <= flowerData.total) {
+                        let pt2 = getPoint(flowerBranchPts, flowerData, overflowD);
+                        ctx.beginPath(); ctx.arc(pt2.x * w, pt2.y * h, pSize, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                    }
+                }
+            });
+            ctx.globalAlpha = 1.0;
+
+            ctx.restore(); 
+
+            let numOpen = Math.ceil(stomaRatio * stomaOrder.length);
+            stomataPos.forEach((pos, idx) => {
+                let isOpen = stomaOrder.indexOf(idx) < numOpen; 
+                let size = w * 0.007; ctx.save(); ctx.translate(pos.x * w, pos.y * h); ctx.rotate(Math.PI / 6); 
+                ctx.fillStyle = '#4ade80'; ctx.strokeStyle = '#14532d'; ctx.lineWidth = 1;
+                if (isOpen) {
+                    ctx.beginPath(); ctx.ellipse(-size*0.5, 0, size*0.4, size, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                    ctx.beginPath(); ctx.ellipse(size*0.5, 0, size*0.4, size, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                    ctx.fillStyle = '#022c22'; ctx.beginPath(); ctx.ellipse(0, 0, size*0.25, size*0.7, 0, 0, Math.PI*2); ctx.fill();
+                } else {
+                    ctx.beginPath(); ctx.ellipse(0, 0, size*0.7, size, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(0, -size*0.9); ctx.lineTo(0, size*0.9); ctx.stroke();
+                }
+                ctx.restore();
+            });
+
+            let spawnChance = actualOutput > 0 ? (actualOutput * 0.08 * pullBoost) : (stomaRatio <= 0.05 ? 0.001 : 0.01); 
+            for (let i = 0; i < stomataPos.length; i++) {
+                if (stomaOrder.indexOf(i) < numOpen && Math.random() < spawnChance && hasStarted) {
+                    evapParticles.push({ x: stomataPos[i].x * w + (Math.random()-0.5)*8, y: stomataPos[i].y * h + (Math.random()-0.5)*5, alpha: 1.0, vx: activeWeather === 'wind' ? 1.5 : (Math.random()-0.5)*0.1, vy: -(0.2 + Math.random()*0.2) });
+                }
+            }
+
+            let isExcessWater = (hasStarted && internalWaterLevel >= 99);
+            if (isExcessWater) {
+                guttationSize += dt * 0.000005; 
+            } else {
+                guttationSize -= dt * 0.00001;  
+            }
+            guttationSize = Math.max(0, Math.min(guttationSize, 0.006));
+
+            if (guttationSize > 0) {
+                ctx.fillStyle = `rgba(147, 197, 253, 0.9)`; 
+                guttationDrops.forEach(drop => { 
+                    ctx.beginPath(); ctx.arc(drop.x * w, drop.y * h, guttationSize * w, 0, Math.PI*2); ctx.fill(); 
+                });
+            }
+
+            ctx.fillStyle = '#2563EB'; ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)'; ctx.lineWidth = w * 0.001;
+            for (let i = evapParticles.length - 1; i >= 0; i--) {
+                let p = evapParticles[i]; p.x += p.vx; p.y += p.vy; p.alpha -= 0.004; 
+                if (p.alpha <= 0) { evapParticles.splice(i, 1); continue; }
+                ctx.globalAlpha = p.alpha; ctx.beginPath(); ctx.arc(p.x, p.y, pSize, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+            }
+            ctx.globalAlpha = 1.0;
+
+            if (activeWeather === 'rain') {
+                let targetY = 0;
+                cloudOffsetY += (targetY - cloudOffsetY) * 0.05; 
+                if (cloudOffsetY > -0.3) {
+                    drawFlatCloud(ctx, w*0.82, h*(cloudOffsetY + 0.15), w*0.0012);
+                    
+                    if(Math.random() < 0.4) rainParticles.push({ x: Math.random() * w, y: 0, vy: 15+Math.random()*10 });
+                    ctx.strokeStyle = '#4dd0e1'; 
+                    ctx.lineWidth = w * 0.004; ctx.lineCap = 'round';
+                    for(let i = rainParticles.length-1; i>=0; i--) {
+                        let r = rainParticles[i]; 
+                        ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x - w*0.008, r.y + r.vy*1.2); ctx.stroke();
+                        r.x -= w*0.002; r.y += r.vy; if(r.y > h) rainParticles.splice(i, 1);
+                    }
+                }
+            } else {
+                cloudOffsetY = -0.3; 
+            }
+
+            requestAnimationFrame(animate);
+        }
+        
+        setTimeout(() => { resizeCanvas(); requestAnimationFrame(animate); }, 200);
+    </script>
+<script src="./global_nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>植物總複習 - 階段四：評量題目</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body, html { 
+            margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #f8fafc; 
+        }
+        
+        #global-layout { display: flex; flex-direction: column; width: 100%; height: 100%; }
+
+        #app-container { 
+            display: grid; 
+            grid-template-columns: clamp(320px, 25vw, 400px) 1fr; 
+            gap: 20px; 
+            width: 100%; flex: 1; min-height: 0; padding: 20px; box-sizing: border-box; 
+        }
+
+        #left-sidebar { display: flex; flex-direction: column; gap: 15px; height: 100%; }
+        .panel-block {
+            background: white; border: 1px solid #e2e8f0; border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); padding: 20px;
+            display: flex; flex-direction: column;
+        }
+
+        #stage-wrapper {
+            position: relative; display: flex; flex-direction: column; justify-content: flex-start; align-items: center;
+            width: 100%; height: 100%; border-radius: 16px; overflow: hidden;
+            background: white; box-shadow: 0 15px 40px rgba(0,0,0,0.12); padding: 0;
+        }
+        
+        #quiz-image-container {
+            width: 100%; flex: 1; display: flex; justify-content: center; align-items: center;
+            background-color: #f1f5f9; position: relative; overflow: hidden;
+        }
+        
+        /* 圖片柔邊效果 */
+        .quiz-img, .dual-img-half img {
+            max-width: 100%; max-height: 100%; object-fit: contain; position: absolute;
+            -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 65%, rgba(0,0,0,0) 100%);
+            mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 65%, rgba(0,0,0,0) 100%);
+        }
+        
+        .quiz-img {
+            transition: opacity 0.4s ease-in-out; opacity: 0; pointer-events: none;
+        }
+        .quiz-img.active { opacity: 1; pointer-events: auto; z-index: 10; }
+        
+        .dual-img-container {
+            display: flex; width: 100%; height: 100%; gap: 4px; padding: 10px; box-sizing: border-box;
+            position: absolute; opacity: 0; pointer-events: none; transition: opacity 0.4s ease-in-out;
+        }
+        .dual-img-container.active { opacity: 1; pointer-events: auto; z-index: 10; }
+        .dual-img-half { 
+            flex: 1; display: flex; justify-content: center; align-items: center; 
+            overflow: hidden; background: transparent; border-radius: 8px;
+        }
+        .dual-img-half img { position: relative; }
+
+        #quiz-question-banner {
+            width: 100%; min-height: 120px; background: white; border-top: 2px solid #e2e8f0;
+            padding: 24px 32px; box-sizing: border-box; z-index: 20;
+        }
+
+        .option-btn {
+            width: 100%; text-align: left; padding: 12px 16px; margin-bottom: 8px;
+            border: 2px solid #e2e8f0; border-radius: 12px; background: white;
+            font-weight: 700; color: #475569; transition: all 0.2s; cursor: pointer;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .option-btn:hover { border-color: #94a3b8; background: #f8fafc; }
+        .option-btn.selected-correct { border-color: #22c55e; background: #ecfdf5; color: #166534; }
+        
+        .option-btn.selected-wrong { 
+            border-color: #fca5a5; background: #fef2f2; color: #ef4444; 
+            opacity: 0.5; text-decoration: line-through; pointer-events: none; 
+        }
+        .option-btn.disabled { pointer-events: none; }
+        
+        .option-label { 
+            display: inline-flex; justify-content: center; align-items: center;
+            width: 28px; height: 28px; background: #e2e8f0; border-radius: 6px; font-size: 14px; color: #64748b;
+            text-decoration: none; 
+        }
+        .option-btn.selected-correct .option-label { background: #22c55e; color: white; }
+        .option-btn.selected-wrong .option-label { background: #ef4444; color: white; }
+
+        #explanation-card {
+            position: absolute; 
+            top: 50%; left: 50%;
+            transform: translate(-50%, -40%);
+            max-width: 420px; width: 90%;
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px);
+            border: 2px solid #e2e8f0; border-radius: 16px; padding: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2); opacity: 0;
+            pointer-events: none; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 50;
+        }
+        #explanation-card.show { 
+            transform: translate(-50%, -50%);
+            opacity: 1; pointer-events: auto; 
+        }
+        
+        #close-exp-btn {
+            position: absolute; top: 12px; right: 12px; cursor: pointer;
+            width: 24px; height: 24px; display: flex; justify-content: center; align-items: center;
+            background: #e2e8f0; border-radius: 50%; color: #64748b; font-size: 12px; font-weight: bold;
+        }
+        #close-exp-btn:hover { background: #cbd5e1; color: #334155; }
+    </style>
+</head>
+<body class="select-none text-slate-800">
+
+    <div id="global-layout">
+        
+      <!-- 全站統一導覽列 -->
+        <nav id="nav-tabs-bar" class="w-full bg-slate-900 shadow-md h-14 flex items-center justify-between px-6 z-[100] flex-shrink-0 select-none">
+            <div class="flex items-center gap-3">
+                <span class="text-xl">🌱</span>
+                <span class="font-black text-lg text-white tracking-wider">會考總複習：植物大串聯</span>
+            </div>
+            
+            <div class="flex items-center gap-2" id="global-nav-buttons">
+                <button data-target="stage1.html" class="nav-btn px-4 py-1.5 rounded-lg text-sm font-bold text-slate-300 hover:bg-slate-800 transition-all">1. 植物系統分類</button>
+                <button data-target="stage2.html" class="nav-btn px-4 py-1.5 rounded-lg text-sm font-bold text-slate-300 hover:bg-slate-800 transition-all">2. 維管束與蒸散</button>
+                <button data-target="stage3.html" class="nav-btn px-4 py-1.5 rounded-lg text-sm font-bold text-slate-300 hover:bg-slate-800 transition-all">3. 光合與呼吸</button>
+                <button data-target="stage4.html" class="nav-btn px-4 py-1.5 rounded-lg text-sm font-bold text-slate-300 hover:bg-slate-800 transition-all">4. 開花與生殖</button>
+            </div>
+            <div id="nav-stage-subtitle" class="text-xs text-slate-400 font-mono"></div>
+        </nav>
+
+        <div id="app-container">
+            
+            <div id="left-sidebar">
+                
+                <div class="panel-block flex-shrink-0 px-4 py-4">
+                    <div class="text-slate-800 font-extrabold text-[15px] tracking-wider border-b pb-2 mb-3 text-center">單元模式</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="location.href='stage4.html'" class="py-2 bg-slate-50 text-slate-500 font-bold text-sm rounded border border-slate-200 hover:bg-slate-100 transition-colors">1. 水蜜桃</button>
+                        <button onclick="location.href='stage4_pea.html'" class="py-2 bg-slate-50 text-slate-500 font-bold text-sm rounded border border-slate-200 hover:bg-slate-100 transition-colors">2. 豌豆</button>
+                        <button class="py-2 bg-emerald-50 text-emerald-700 font-bold text-sm rounded border border-emerald-300 shadow-sm">3. 評量題目</button>
+                        <button onclick="location.href='stage4_gene.html'" class="py-2 bg-slate-50 text-slate-500 font-bold text-sm rounded border border-slate-200 hover:bg-slate-100 transition-colors">4. 遺傳概念</button>
+                    </div>
+                </div>
+
+                <div class="panel-block flex-shrink-0 flex flex-col items-center justify-center py-6 relative">
+                    <div id="status-title" class="text-sm font-bold text-slate-400 mb-2 transition-colors">當前題號</div>
+                    <div class="flex items-baseline gap-1 text-emerald-600 mb-4 transition-transform" id="status-number-container">
+                        <span class="text-5xl font-black" id="quiz-current-q">1</span>
+                        <!-- 總題數更新為 6 題 -->
+                        <span class="text-xl font-bold text-slate-400">/ 6</span>
+                    </div>
+                    
+                    <div class="flex gap-2 w-full justify-center px-4 mb-4" id="quiz-progress-dots"></div>
+
+                    <button id="btn-next-q" class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-[0_4px_15px_rgba(16,185,129,0.3)] transition-all text-base hidden">
+                        下一題 ➡️
+                    </button>
+                </div>
+
+                <div class="panel-block flex-1 flex flex-col bg-slate-50 border-slate-200 overflow-y-auto">
+                    <div class="text-[15px] font-extrabold text-slate-700 mb-4 border-b border-slate-200 pb-2">請選擇正確答案：</div>
+                    <div id="quiz-options-container" class="flex flex-col flex-1"></div>
+                </div>
+            </div>
+
+            <div id="stage-wrapper">
+                
+                <div id="quiz-image-container">
+                    
+                    <!-- 提示與解析卡片 -->
+                    <div id="explanation-card">
+                        <div id="close-exp-btn" onclick="document.getElementById('explanation-card').classList.remove('show')">✕</div>
+                        <div class="flex items-center gap-2 text-emerald-600 font-black text-lg mb-2">
+                            <span id="exp-icon">💡</span>
+                            <span id="exp-title">觀念解析</span>
+                        </div>
+                        <p id="exp-content" class="text-[15px] font-bold text-slate-700 leading-relaxed">
+                            解析內容...
+                        </p>
+                    </div>
+
+                    <!-- Q1 -->
+                    <div id="q1-dual" class="dual-img-container active">
+                        <div class="dual-img-half"><img src="./MT02.png" alt="水蜜桃開花"></div>
+                        <div class="dual-img-half"><img src="./MT16.png" alt="水蜜桃果實"></div>
+                    </div>
+                    
+                    <!-- Q2 -->
+                    <div id="q2-dual" class="dual-img-container">
+                        <div class="dual-img-half"><img src="./p02.png" alt="豌豆開花"></div>
+                        <div class="dual-img-half"><img src="./p16.png" alt="豌豆果莢"></div>
+                    </div>
+
+                    <!-- Q3 -->
+                    <div id="q3-dual" class="dual-img-container">
+                        <div class="dual-img-half"><img src="./grape2.png" alt="葡萄花"></div>
+                        <div class="dual-img-half"><img src="./grape1.png" alt="葡萄果串"></div>
+                    </div>
+
+                    <!-- Q4 -->
+                    <div id="q4-dual" class="dual-img-container">
+                        <div class="dual-img-half"><img src="./sunflower3.png" alt="向日葵外觀"></div>
+                        <div class="dual-img-half"><img id="q4-sunflower-right" src="./sunflower1.png" alt="向日葵剖面"></div>
+                    </div>
+
+                    <!-- Q5 草莓 -->
+                    <img id="q5-img-initial" src="./strawberry3.png" class="quiz-img" alt="草莓花外觀">
+                    <div id="q5-dual-result" class="dual-img-container">
+                        <div class="dual-img-half"><img src="./strawberry2.png" alt="草莓花剖面"></div>
+                        <div class="dual-img-half"><img src="./strawberry1.png" alt="草莓果實剖面"></div>
+                    </div>
+
+                    <!-- Q6 火龍果 -->
+                    <div id="q6-dual" class="dual-img-container">
+                        <div class="dual-img-half"><img src="./hl2.png" alt="火龍果花剖面"></div>
+                        <div class="dual-img-half"><img src="./hl1.png" alt="火龍果果實剖面"></div>
+                    </div>
+                    <img id="q6-img-result" src="./hl3.png" class="quiz-img" alt="火龍果海葵狀柱頭">
+
+                </div>
+
+                <div id="quiz-question-banner">
+                    <h2 id="question-text" class="text-xl font-bold text-slate-800 leading-relaxed">
+                        載入題目中...
+                    </h2>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const QuizApp = (function() {
+            const questions = [
+                {
+                    id: 1,
+                    targetImgId: 'q1-dual',
+                    question: "水蜜桃切開後中央只有一顆堅硬的果核。關於水蜜桃的花朵構造與果實發育，下列敘述何者錯誤？",
+                    options: [
+                        "花朵的子房內部通常只有 1 顆胚珠",
+                        "多汁的果肉是由「子房壁」發育而來",
+                        "只要 1 粒花粉成功受精，就能結出完整水蜜桃",
+                        "若有 10 粒花粉落在柱頭上，最後會結出 10 顆種子"
+                    ],
+                    correctIdx: 3,
+                    explanation: "水蜜桃屬於「單胚珠」植物，子房內只有1顆胚珠。即使有10粒花粉落在柱頭上，最終也只有1粒花粉的精細胞能與那唯一的卵細胞結合，發育成1顆種子。"
+                },
+                {
+                    id: 2,
+                    targetImgId: 'q2-dual',
+                    question: "一朵正常的豌豆花子房內含有 4 顆胚珠。若柱頭上僅有 2 粒花粉成功萌發並完成受精，則豆莢成熟後最可能呈現何種狀態？",
+                    options: [
+                        "豆莢內長滿 4 顆飽滿種子",
+                        "豆莢內只有 2 顆飽滿種子，另 2 顆胚珠萎縮",
+                        "整條豆莢因受精不完全而凋萎脫落",
+                        "產生 2 條獨立的小豆莢"
+                    ],
+                    correctIdx: 1,
+                    explanation: "豌豆是「多胚珠」植物。1粒花粉只能讓1顆胚珠受精發育為種子。2粒花粉受精會發育出2顆種子，其餘未受精的胚珠則會萎縮成小白點。"
+                },
+                {
+                    id: 3,
+                    targetImgId: 'q3-dual',
+                    question: "若這串成熟葡萄共有 8 顆葡萄，且每顆葡萄切開平均有 3 顆種子。請問當初開花期時，這串花序至少有多少「朵」花成功受精？",
+                    options: [
+                        "1 朵花",
+                        "8 朵花",
+                        "24 朵花",
+                        "32 朵花"
+                    ],
+                    correctIdx: 1,
+                    explanation: "葡萄屬於「花序」。圖中每一顆葡萄果實都是由「一朵獨立小花的子房」發育而來。有 8 顆葡萄，代表當初至少有 8 朵花成功完成授粉與受精。"
+                },
+                {
+                    id: 4,
+                    targetImgId: 'q4-dual',
+                    question: "向日葵花盤中央由數百朵管狀花組成。若此花盤結出 300 粒飽滿的葵花子，則在受精過程中，這株向日葵至少需要多少粒花粉參與？",
+                    options: [
+                        "只要 1 粒花粉",
+                        "至少 300 粒花粉",
+                        "至少 600 粒花粉",
+                        "不需要花粉"
+                    ],
+                    correctIdx: 1,
+                    explanation: "向日葵是「頭狀花序」，每一粒葵瓜子都是由一朵獨立小花的單一胚珠發育而成。300粒葵花子代表有300朵小花受精，因此需要至少300粒花粉。"
+                },
+                {
+                    id: 5,
+                    targetImgId: 'q5-img-initial',
+                    question: "觀察草莓花朵剖面，中央密密麻麻長了許多獨立的雌蕊。請問我們食用草莓「紅甜多汁的主要部位」，以及「表面一粒粒的小顆粒」，分別是由什麼構造發育來的？",
+                    options: [
+                        "紅色部位：子房；表面顆粒：胚珠",
+                        "紅色部位：花托；表面顆粒：子房變成的果實",
+                        "紅色部位：花托；表面顆粒：未受精的種子",
+                        "紅色部位：花萼；表面顆粒：花粉粒"
+                    ],
+                    correctIdx: 1,
+                    explanation: "草莓是典型的「假果」。我們吃的多汁紅色部位是由「花托」膨大而來；而草莓表面一顆顆的小黑點，才是由多個獨立「子房」發育而成的真正果實(瘦果)喔！"
+                },
+                {
+                    id: 6,
+                    targetImgId: 'q6-dual',
+                    question: "小明切開一顆白肉火龍果，發現裡面密密麻麻分布了約 3,000 粒黑色種子。請問關於這顆火龍果在當初開花與受精過程的推論，下列敘述何者最合理？",
+                    options: [
+                        "只要有 1 粒花粉落在柱頭上，精細胞就會分裂使全部胚珠受精",
+                        "當初至少有 3,000 粒花粉落在柱頭上並成功萌發花粉管",
+                        "黑色種子是花托組織直接變形形成的，不需要花粉參與",
+                        "這顆火龍果是由 3,000 朵不同的小花聚合發育而成的"
+                    ],
+                    correctIdx: 1,
+                    explanation: "第一性原則：每一粒種子的形成都嚴格對應「一粒」花粉！3000顆黑籽代表當初至少有3000粒花粉成功受精。為容納海量花粉，火龍果演化出了背後照片中宛如「巨大海葵」般、具備20多個分岔裂片的超大柱頭！"
+                }
+            ];
+
+            let currentQIndex = 0;
+            let isAnswered = false;
+            let isReviewMode = false;
+
+            const elQuestionText = document.getElementById('question-text');
+            const elOptionsContainer = document.getElementById('quiz-options-container');
+            const elCurrentQ = document.getElementById('quiz-current-q');
+            const elProgressDots = document.getElementById('quiz-progress-dots');
+            const elBtnNext = document.getElementById('btn-next-q');
+            
+            const elExpCard = document.getElementById('explanation-card');
+            const elExpIcon = document.getElementById('exp-icon');
+            const elExpTitle = document.getElementById('exp-title');
+            const elExpContent = document.getElementById('exp-content');
+            
+            const elStatusTitle = document.getElementById('status-title');
+
+            function init() {
+                questions.forEach((_, idx) => {
+                    const dot = document.createElement('div');
+                    dot.className = `w-4 h-4 rounded-full border-2 transition-all ${idx === 0 ? 'bg-emerald-500 border-emerald-500' : 'bg-slate-200 border-slate-200'}`;
+                    dot.id = `dot-${idx}`;
+                    dot.onclick = () => {
+                        if (isReviewMode) {
+                            currentQIndex = idx;
+                            loadQuestion(idx);
+                        }
+                    };
+                    elProgressDots.appendChild(dot);
+                });
+
+                elBtnNext.addEventListener('click', () => {
+                    if (!isReviewMode && currentQIndex === questions.length - 1) {
+                        enableReviewMode();
+                    } else if (!isReviewMode) {
+                        goNext();
+                    }
+                });
+
+                loadQuestion(currentQIndex);
+            }
+
+            function loadQuestion(index) {
+                isAnswered = false;
+                const q = questions[index];
+                
+                elCurrentQ.textContent = index + 1;
+                elQuestionText.textContent = q.question;
+                
+                document.querySelectorAll('.quiz-img, .dual-img-container').forEach(img => {
+                    img.classList.remove('active');
+                });
+                document.getElementById(q.targetImgId).classList.add('active');
+
+                // 狀態重置
+                if (q.id === 4) {
+                    document.getElementById('q4-sunflower-right').src = './sunflower1.png';
+                }
+                
+                elExpCard.classList.remove('show');
+                elBtnNext.classList.add('hidden');
+                elOptionsContainer.innerHTML = '';
+
+                // 洗牌演算法
+                let optionsData = q.options.map((text, i) => {
+                    return { text: text, isCorrect: (i === q.correctIdx) };
+                });
+
+                for (let i = optionsData.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [optionsData[i], optionsData[j]] = [optionsData[j], optionsData[i]];
+                }
+
+                const labels = ['A', 'B', 'C', 'D'];
+                optionsData.forEach((opt, newIdx) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'option-btn group';
+                    btn.innerHTML = `
+                        <span class="option-label group-hover:bg-slate-300 transition-colors">${labels[newIdx]}</span>
+                        <span class="text-left font-medium">${opt.text}</span>
+                    `;
+                    
+                    btn.onclick = () => {
+                        if (!isAnswered && !btn.classList.contains('selected-wrong')) {
+                            handleAnswer(opt.isCorrect, btn, q);
+                        }
+                    };
+                    elOptionsContainer.appendChild(btn);
+                });
+
+                updateDots();
+            }
+
+            function handleAnswer(isCorrect, btnElement, qObj) {
+                if (isCorrect) {
+                    isAnswered = true;
+                    
+                    const allBtns = elOptionsContainer.querySelectorAll('.option-btn');
+                    allBtns.forEach(b => {
+                        if (b !== btnElement) b.classList.add('disabled');
+                    });
+
+                    btnElement.classList.add('selected-correct');
+                    showExplanation(true, qObj.explanation);
+
+                    // 圖片切換特效
+                    if (qObj.id === 4) {
+                        document.getElementById('q4-sunflower-right').src = './sunflower2.png';
+                    }
+                    if (qObj.id === 5) {
+                        document.getElementById('q5-img-initial').classList.remove('active');
+                        document.getElementById('q5-dual-result').classList.add('active');
+                    }
+                    // Q6 火龍果切換為真實海葵柱頭
+                    if (qObj.id === 6) {
+                        document.getElementById('q6-dual').classList.remove('active');
+                        document.getElementById('q6-img-result').classList.add('active');
+                    }
+
+                    if (!isReviewMode) {
+                        if (currentQIndex < questions.length - 1) {
+                            elBtnNext.innerHTML = '下一題 ➡️';
+                            elBtnNext.classList.remove('hidden');
+                        } else {
+                            elBtnNext.innerHTML = '🎉 恭喜完成！開啟自由複習';
+                            elBtnNext.className = 'w-full py-3 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-black rounded-xl shadow-[0_4px_15px_rgba(245,158,11,0.4)] transition-all text-base animate-bounce mt-4';
+                            elBtnNext.classList.remove('hidden');
+                        }
+                    }
+                } else {
+                    btnElement.classList.add('selected-wrong');
+                    showExplanation(false, "哎呀，這個選項不對喔！它已經被刪去了，請用剩下的選項再試試看！");
+                }
+            }
+
+            function showExplanation(isCorrect, text) {
+                if (isCorrect) {
+                    elExpIcon.textContent = '🎉';
+                    elExpTitle.textContent = '答對了！';
+                    elExpTitle.className = 'text-emerald-600 font-black';
+                    elExpCard.style.borderColor = '#34d399';
+                    elExpCard.style.backgroundColor = 'rgba(236, 253, 245, 0.95)';
+                } else {
+                    elExpIcon.textContent = '🤔';
+                    elExpTitle.textContent = '再想想看...';
+                    elExpTitle.className = 'text-rose-500 font-black';
+                    elExpCard.style.borderColor = '#fca5a5';
+                    elExpCard.style.backgroundColor = 'rgba(254, 242, 242, 0.95)';
+                }
+                elExpContent.textContent = text;
+                elExpCard.classList.add('show');
+            }
+
+            function goNext() {
+                if (currentQIndex < questions.length - 1) {
+                    currentQIndex++;
+                    loadQuestion(currentQIndex);
+                }
+            }
+
+            function enableReviewMode() {
+                isReviewMode = true;
+                elBtnNext.classList.add('hidden'); 
+                
+                elStatusTitle.textContent = "自由複習模式 (請點擊燈號切換)";
+                elStatusTitle.classList.replace('text-slate-400', 'text-amber-500');
+                
+                updateDots();
+            }
+
+            function updateDots() {
+                questions.forEach((_, idx) => {
+                    const dot = document.getElementById(`dot-${idx}`);
+                    
+                    if (isReviewMode) {
+                        dot.classList.add('cursor-pointer', 'hover:scale-125');
+                        if (idx === currentQIndex) {
+                            dot.className = 'w-4 h-4 rounded-full border-2 transition-all cursor-pointer hover:scale-125 bg-white border-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)] scale-110';
+                        } else {
+                            dot.className = 'w-4 h-4 rounded-full border-2 transition-all cursor-pointer hover:scale-125 bg-emerald-400 border-emerald-400 opacity-60';
+                        }
+                    } else {
+                        dot.classList.remove('cursor-pointer', 'hover:scale-125');
+                        if (idx < currentQIndex) {
+                            dot.className = 'w-4 h-4 rounded-full border-2 transition-colors bg-emerald-500 border-emerald-500';
+                        } else if (idx === currentQIndex) {
+                            dot.className = 'w-4 h-4 rounded-full border-2 transition-colors bg-white border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]';
+                        } else {
+                            dot.className = 'w-4 h-4 rounded-full border-2 transition-colors bg-slate-200 border-slate-200';
+                        }
+                    }
+                });
+            }
+
+            return { init };
+        })();
+
+        document.addEventListener("DOMContentLoaded", () => {
+            QuizApp.init();
+        });
+    </script>
+<script src="./global_nav.js"></script>
+</body>
+</html>

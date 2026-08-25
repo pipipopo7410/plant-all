@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>植物總複習 - 階段四：豌豆的生殖與果實</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body, html { 
+            margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #f8fafc; 
+        }
+        
+        #global-layout { display: flex; flex-direction: column; width: 100%; height: 100%; }
+
+        #app-container { 
+            display: grid; 
+            grid-template-columns: clamp(320px, 25vw, 400px) 1fr; 
+            gap: 20px; 
+            width: 100%; flex: 1; min-height: 0; padding: 20px; box-sizing: border-box; 
+        }
+
+        #left-sidebar { display: flex; flex-direction: column; gap: 15px; height: 100%; }
+        .panel-block {
+            background: white; border: 1px solid #e2e8f0; border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); padding: 20px;
+        }
+
+        .slider-wrapper { position: relative; width: 100%; height: 32px; display: flex; align-items: center; }
+        .slider-track { position: absolute; left: 0; right: 0; height: 8px; background: #e2e8f0; border-radius: 4px; pointer-events: none; z-index: 1; display: flex; justify-content: space-between; align-items: center; padding: 0 16px; }
+        .slider-tick { width: 6px; height: 6px; background: #94a3b8; border-radius: 50%; }
+        
+        input[type=range] { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; background: transparent; appearance: none; cursor: pointer; z-index: 10; }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-thumb {
+            appearance: none; width: 32px; height: 32px; background: #16a34a; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 4px solid white; transition: transform 0.1s;
+        }
+        input[type=range]::-webkit-slider-thumb:active { transform: scale(1.15); }
+
+        #stage-wrapper {
+            position: relative; display: flex; justify-content: center; align-items: center;
+            width: 100%; height: 100%; border-radius: 16px; overflow: hidden;
+            background: white; box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+        }
+        
+        #stage { position: relative; flex-shrink: 0; background: transparent; }
+        #stage4_bg_container { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; background: white; }
+        .stage4-frame { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; will-change: opacity; background-color: white; }
+
+        #stage4_svg_layer { 
+            position: absolute; inset: 0; width: 100%; height: 100%; z-index: 10; 
+            touch-action: none; pointer-events: auto; 
+        }
+        .prevent-select { -webkit-user-select: none; user-select: none; }
+        
+        .data-locked { filter: blur(4px); opacity: 0.4; }
+        .data-unlocked { filter: blur(0px); opacity: 1; transition: all 0.5s ease-out; }
+
+        #pooe-modal { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); }
+
+        #dev-coord-panel {
+            display: none; position: absolute; top: 10px; left: 10px; z-index: 9999;
+            background: rgba(0, 0, 0, 0.8); color: #22c55e; font-family: monospace;
+            padding: 10px 15px; border-radius: 8px; border: 1px solid #22c55e;
+            pointer-events: none;
+        }
+
+        .lbl-layer {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            font-weight: 900;
+            text-shadow: 0 0 4px rgba(255,255,255,1), 0 0 6px rgba(255,255,255,0.9);
+            pointer-events: none;
+            will-change: transform, opacity;
+        }
+    </style>
+</head>
+<body class="select-none text-slate-800">
+
+    <div id="global-layout">
+        
+       <!-- 全站統一導覽列 -->
+        <nav id="nav-tabs-bar" class="w-full bg-slate-900 shadow-md h-14 flex items-center justify-between px-6 z-[100] flex-shrink-0 select-none">
+            <div class="flex items-center gap-3">
+                <span class="text-xl">🌱</span>
+                <span class="font-black text-lg text-white tracking-wider">會考總複習：植物大串聯</span>
+            </div>
+            
+            <div class="flex items-center gap-2" id="global-nav-buttons">
+                <button data-target="stage1.html" class="nav-btn px-4 py-1.5 rounded-lg text-sm font-bold text-slate-300 hover:bg-slate-800 transition-all">1. 植物系統分類</button>
+                <button data-target="stage2.html" class="nav-btn px-4 py-1.5 rounded-lg text-sm font-bold text-slate-300 hover:bg-slate-800 transition-all">2. 維管束與蒸散</button>
+                <button data-target="stage3.html" class="nav-btn px-4 py-1.5 rounded-lg text-sm font-bold text-slate-300 hover:bg-slate-800 transition-all">3. 光合與呼吸</button>
+                <button data-target="stage4.html" class="nav-btn px-4 py-1.5 rounded-lg text-sm font-bold text-slate-300 hover:bg-slate-800 transition-all">4. 開花與生殖</button>
+            </div>
+            <div id="nav-stage-subtitle" class="text-xs text-slate-400 font-mono"></div>
+        </nav>
+
+        <div id="app-container">
+            
+            <div id="left-sidebar">
+                
+                <div class="panel-block flex-shrink-0 px-4 py-4">
+                    <div class="text-slate-800 font-extrabold text-[15px] tracking-wider border-b pb-2 mb-3 text-center">單元模式</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="location.href='stage4.html'" class="py-2 bg-slate-50 text-slate-500 font-bold text-sm rounded border border-slate-200 hover:bg-slate-100 transition-colors">1. 水蜜桃</button>
+                        <button class="py-2 bg-emerald-50 text-emerald-700 font-bold text-sm rounded border border-emerald-300 shadow-sm">2. 豌豆</button>
+                        <button onclick="location.href='stage4_quiz.html'" class="py-2 bg-slate-50 text-slate-500 font-bold text-sm rounded border border-slate-200 hover:bg-slate-100 transition-colors">3. 評量題目</button>
+                        <button onclick="location.href='stage4_gene.html'" class="py-2 bg-slate-50 text-slate-500 font-bold text-sm rounded border border-slate-200 hover:bg-slate-100 transition-colors">4. 遺傳概念</button>
+                    </div>
+                </div>
+
+                <div class="panel-block text-center flex-shrink-0 flex flex-col gap-2">
+                    <div class="grid grid-cols-2 gap-y-5 gap-x-2 mt-2">
+                        <div class="border-r border-b border-slate-200 flex flex-col items-center justify-center pb-4">
+                            <div class="text-sm text-slate-400 mb-1 font-bold">總胚珠數</div>
+                            <div class="flex items-baseline justify-center gap-1">
+                                <span class="text-5xl font-black text-emerald-600">4</span>
+                                <span class="text-sm text-slate-400 font-bold">個</span>
+                            </div>
+                        </div>
+                        <div class="border-b border-slate-200 flex flex-col items-center justify-center pb-4">
+                            <div class="text-sm text-slate-400 mb-1 font-bold">柱頭花粉</div>
+                            <div class="flex items-baseline justify-center gap-1">
+                                <span id="stage4_ui_pollen" class="text-5xl font-black text-blue-600">0</span>
+                                <span class="text-sm text-slate-400 font-bold">粒</span>
+                            </div>
+                        </div>
+                        <div class="border-r border-slate-200 flex flex-col items-center justify-center pt-2 relative">
+                            <div class="text-sm text-slate-400 mb-1 font-bold">飽滿種子</div>
+                            <div id="stage4_val_seed" class="flex items-baseline justify-center gap-1 data-locked">
+                                <span id="stage4_ui_seed" class="text-5xl font-black text-emerald-600">0</span>
+                                <span class="text-sm text-slate-400 font-bold">顆</span>
+                            </div>
+                            <div id="stage4_lock_seed" class="absolute top-10 text-2xl">🔒</div>
+                        </div>
+                        <div class="flex flex-col items-center justify-center pt-2 relative">
+                            <div class="text-sm text-slate-400 mb-1 font-bold">萎縮胚珠</div>
+                            <div id="stage4_val_abort" class="flex items-baseline justify-center gap-1 data-locked">
+                                <span id="stage4_ui_abort" class="text-5xl font-black text-amber-500">4</span>
+                                <span class="text-sm text-slate-400 font-bold">顆</span>
+                            </div>
+                            <div id="stage4_lock_abort" class="absolute top-10 text-2xl">🔒</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-block flex-1 flex flex-col items-center justify-center bg-gradient-to-b from-white to-emerald-50/50 border-emerald-100 relative overflow-hidden">
+                    <div class="text-sm font-bold text-slate-600 mb-4 tracking-wide z-10 text-center">
+                        👉 拖曳花粉到柱頭<br>
+                        <span class="text-xs text-slate-400 font-normal">(可持續放上無限顆花粉)</span>
+                    </div>
+                    
+                    <div id="stage4_draggable_pollen" class="w-20 h-20 cursor-grab hover:scale-105 active:scale-95 transition-transform touch-none z-20 pointer-events-auto flex items-center justify-center drop-shadow-[0_8px_16px_rgba(234,88,12,0.35)]">
+                        <svg viewBox="0 0 100 100" class="w-full h-full prevent-select">
+                            <defs>
+                                <radialGradient id="pollenGradPea" cx="30%" cy="30%" r="70%">
+                                    <stop offset="0%" stop-color="#fdba74" />
+                                    <stop offset="50%" stop-color="#f97316" />
+                                    <stop offset="100%" stop-color="#c2410c" />
+                                </radialGradient>
+                            </defs>
+                            <circle cx="50" cy="50" r="45" fill="url(#pollenGradPea)"/>
+                            <path d="M 50 15 Q 60 30 50 45" fill="none" stroke="#9a3412" stroke-width="4" stroke-linecap="round"/>
+                            <path d="M 25 65 Q 40 60 45 50" fill="none" stroke="#9a3412" stroke-width="4" stroke-linecap="round"/>
+                            <path d="M 75 65 Q 60 60 55 50" fill="none" stroke="#9a3412" stroke-width="4" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    
+                    <button id="stage4_reset_pollen" class="mt-4 px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-md transition-colors">重設花粉</button>
+                </div>
+            </div>
+
+            <div id="stage-wrapper">
+                
+                <!-- 【按鈕放大與錯開顯示】加大尺寸: text-2xl py-4 px-8 -->
+                <button id="stage4_new_flower_btn" class="absolute top-6 right-6 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-2xl py-4 px-8 rounded-full shadow-[0_8px_20px_rgba(16,185,129,0.4)] transform -translate-y-[150%] opacity-0 transition-all duration-500 z-50 flex items-center gap-2 pointer-events-none border-2 border-white">
+                    <span>🔄</span> 新的一朵花
+                </button>
+                
+                <div id="pooe-memory" class="absolute top-24 right-6 bg-white/95 backdrop-blur shadow-lg border-2 border-emerald-300 rounded-xl px-5 py-3 text-lg font-black text-slate-700 opacity-0 hidden transition-opacity duration-300 z-40 pointer-events-none">
+                    你的推測：(A) 長滿種子
+                </div>
+
+                <div id="final-check-toast" class="absolute top-44 right-6 bg-amber-100 text-amber-800 border-2 border-amber-300 shadow-lg rounded-xl px-5 py-3 text-lg font-black transform -translate-y-4 opacity-0 transition-all duration-500 z-40 pointer-events-none">
+                    👀 你推測對了嗎？
+                </div>
+
+                <div id="stage">
+                    <div id="stage4_bg_container"></div>
+
+                    <div id="dev-coord-panel">
+                        <div class="font-bold border-b border-green-700 pb-1 mb-1">📍 座標追蹤模式 (F12)</div>
+                        <div>目前游標: <span id="dev-coord-current">X: 0, Y: 0</span></div>
+                        <div class="text-[10px] text-green-600 mt-1">點擊畫面可於 Console 輸出並標記紅點</div>
+                    </div>
+
+                    <svg id="stage4_svg_layer" viewBox="0 0 800 600" preserveAspectRatio="none">
+                        <g id="dev-markers-layer"></g>
+
+                        <path id="tube_0" d="M 526 201 Q 480 300 374 390" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" opacity="0"/>
+                        <path id="tube_1" d="M 526 201 Q 485 305 388 384" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" opacity="0"/>
+                        <path id="tube_2" d="M 526 201 Q 490 310 401 375" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" opacity="0"/>
+                        <path id="tube_3" d="M 526 201 Q 495 315 418 367" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" opacity="0"/>
+
+                        <g id="stage4_stigma_pollens"></g>
+
+                        <g id="ovules_layer">
+                            <image id="seed_img_0_green" href="./pea_seed.png" opacity="0"/>
+                            <image id="seed_img_0_abort" href="./pea_aborted.png" opacity="0"/>
+                            <image id="seed_img_1_green" href="./pea_seed.png" opacity="0"/>
+                            <image id="seed_img_1_abort" href="./pea_aborted.png" opacity="0"/>
+                            <image id="seed_img_2_green" href="./pea_seed.png" opacity="0"/>
+                            <image id="seed_img_2_abort" href="./pea_aborted.png" opacity="0"/>
+                            <image id="seed_img_3_green" href="./pea_seed.png" opacity="0"/>
+                            <image id="seed_img_3_abort" href="./pea_aborted.png" opacity="0"/>
+                        </g>
+                    </svg>
+
+                    <div id="stage4_html_labels" class="absolute inset-0 w-full h-full pointer-events-none z-[60]">
+                        <div id="lbl_ovary" class="lbl-layer text-slate-600 text-lg opacity-0">子房</div>
+                        <div id="lbl_fruit" class="lbl-layer text-emerald-700 text-lg opacity-0">果實(果莢)</div>
+                        
+                        <div id="lbl_ovule_0" class="lbl-layer text-slate-600 text-[13px] opacity-0">胚珠</div>
+                        <div id="lbl_seed_0"  class="lbl-layer text-emerald-600 text-[13px] opacity-0">種子</div>
+                        <div id="lbl_abort_0" class="lbl-layer text-amber-600 text-[13px] opacity-0">萎縮</div>
+
+                        <div id="lbl_ovule_1" class="lbl-layer text-slate-600 text-[13px] opacity-0">胚珠</div>
+                        <div id="lbl_seed_1"  class="lbl-layer text-emerald-600 text-[13px] opacity-0">種子</div>
+                        <div id="lbl_abort_1" class="lbl-layer text-amber-600 text-[13px] opacity-0">萎縮</div>
+
+                        <div id="lbl_ovule_2" class="lbl-layer text-slate-600 text-[13px] opacity-0">胚珠</div>
+                        <div id="lbl_seed_2"  class="lbl-layer text-emerald-600 text-[13px] opacity-0">種子</div>
+                        <div id="lbl_abort_2" class="lbl-layer text-amber-600 text-[13px] opacity-0">萎縮</div>
+
+                        <div id="lbl_ovule_3" class="lbl-layer text-slate-600 text-[13px] opacity-0">胚珠</div>
+                        <div id="lbl_seed_3"  class="lbl-layer text-emerald-600 text-[13px] opacity-0">種子</div>
+                        <div id="lbl_abort_3" class="lbl-layer text-amber-600 text-[13px] opacity-0">萎縮</div>
+                    </div>
+
+                    <div id="stage4_stigma_zone" class="absolute pointer-events-none border-4 border-dashed border-emerald-400 opacity-0 transition-opacity z-20 rounded-full" style="left: 61%; top: 28%; width: 9.5%; height: 11.5%;"></div>
+                </div>
+
+                <div class="absolute bottom-6 left-[3%] w-[94%] px-6 py-4 bg-white/90 backdrop-blur-xl rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.15)] border border-white z-40 flex flex-col gap-2">
+                    <div class="relative w-full h-4 text-[11px] sm:text-[13px] text-gray-700 font-black tracking-tight drop-shadow-sm whitespace-nowrap">
+                        <span class="absolute top-0 left-0 text-left">1. 閉花</span>
+                        <span class="absolute top-0 transform -translate-x-1/2 text-center" style="left: 10%;">2. 撥開授粉</span>
+                        <span class="absolute top-0 transform -translate-x-1/2 text-center" style="left: 20%;">3. 花粉管萌發</span>
+                        <span class="absolute top-0 transform -translate-x-1/2 text-center" style="left: 55%;">4. 花瓣凋萎與膨大</span>
+                        <span class="absolute top-0 right-0 text-right">5. 豆莢成熟</span>
+                    </div>
+                    <div class="slider-wrapper">
+                        <div class="slider-track" id="slider-ticks"></div>
+                        <input type="range" id="stage4_time_slider" min="1" max="14" value="1" step="0.01">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- POOE 彈窗 -->
+    <div id="pooe-modal" class="fixed inset-0 z-[200] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-8 shadow-2xl border border-slate-100 flex flex-col gap-6 transform transition-all">
+            
+            <p class="text-slate-700 text-xl leading-relaxed font-bold text-center">
+                此花有 <span class="text-red-600 font-black text-2xl">4顆</span> 胚珠、<span id="pooe-pollen-count" class="text-red-600 font-black text-2xl">0</span><span class="text-red-600 font-black text-2xl">顆</span> 花粉。<br>請推測最後結果：
+            </p>
+
+            <div class="flex flex-col gap-3 my-2">
+                <button onclick="Stage4_Pea_App.submitPOOE('A')" class="w-full text-left p-4 rounded-xl border-2 border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50 font-bold text-slate-700 text-base transition-all flex items-center justify-between">
+                    <span>(A) 果實(果莢)內 <span class="text-red-600 font-black">長滿種子</span></span>
+                    <span class="text-xl text-slate-300">👉</span>
+                </button>
+                <button onclick="Stage4_Pea_App.submitPOOE('B')" class="w-full text-left p-4 rounded-xl border-2 border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50 font-bold text-slate-700 text-base transition-all flex items-center justify-between">
+                    <span>(B) 果實(果莢)內 <span id="pooe-btn-b-content" class="text-red-600 font-black">只有 0 顆種子</span></span>
+                    <span class="text-xl text-slate-300">👉</span>
+                </button>
+                <button onclick="Stage4_Pea_App.submitPOOE('C')" class="w-full text-left p-4 rounded-xl border-2 border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50 font-bold text-slate-700 text-base transition-all flex items-center justify-between">
+                    <span>(C) 果實(果莢)內 <span class="text-red-600 font-black">種子無法發育</span></span>
+                    <span class="text-xl text-slate-300">👉</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 超大字體客製化彈窗 -->
+    <div id="custom-alert-modal" class="fixed inset-0 z-[300] hidden flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-3xl p-8 shadow-2xl flex flex-col items-center justify-center gap-6 max-w-sm w-full">
+            <div id="custom-alert-text" class="text-[24px] font-black text-slate-700 text-center tracking-wide leading-snug">
+                現在還不能授粉啦
+            </div>
+            <button id="custom-alert-btn" onclick="document.getElementById('custom-alert-modal').classList.add('hidden')" class="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-sm transition-all text-xl">
+                我知道了
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const Stage4_Pea_App = (function() {
+            const maxFrames = 14;
+            const state = { 
+                exactFrame: 1.0, 
+                pollenCount: 0, 
+                pooeAnswered: false, 
+                pooeTriggered: false,
+                devMode: false,
+                newFlowerTimer: null // 控制新花按鈕延遲的計時器
+            };
+            
+            let els = {};
+            let images = [];
+            let drag = { active: false, ghost: null, offsetX: 0, offsetY: 0 };
+
+            const frameFiles = [
+                'p01.png', 'p02.png', 'p03.png', 'p06.png', 'p07.png', 
+                'p08.png', 'p09.png', 'p10.png', 'p11.png', 'p12.png', 
+                'p13.png', 'p14.png', 'p15.png', 'p16.png'
+            ];
+
+            const startCoords = [{x:374, y:390}, {x:388, y:384}, {x:401, y:375}, {x:418, y:367}]; 
+            const endCoords = [{x:378, y:375}, {x:435, y:335}, {x:495, y:288}, {x:548, y:232}];   
+
+            const coordData = {
+                ovary: [
+                    {x: 399, y: 408}, {x: 399, y: 408}, // Frame 1, 2
+                    {x: 399, y: 408}, // Frame 3
+                    {x: 402, y: 400}, // Frame 4
+                    {x: 415, y: 399}, // Frame 5
+                    {x: 433, y: 396}, // Frame 6
+                    {x: 442, y: 396}, // Frame 7
+                    {x: 450, y: 395}, // Frame 8
+                    {x: 464, y: 395}, // Frame 9
+                    {x: 477, y: 396}, // Frame 10
+                    {x: 495, y: 390}, // Frame 11
+                    {x: 508, y: 387}, // Frame 12
+                    {x: 521, y: 386}, // Frame 13
+                    {x: 534, y: 378}  // Frame 14
+                ]
+            };
+
+            function getInterp(frame, type) {
+                let idx = Math.floor(frame) - 1;
+                if (idx < 0) idx = 0;
+                if (idx >= 13) return coordData[type][13];
+                
+                let ratio = frame - Math.floor(frame);
+                let p1 = coordData[type][idx];
+                let p2 = coordData[type][idx + 1];
+                
+                return {
+                    x: p1.x + (p2.x - p1.x) * ratio,
+                    y: p1.y + (p2.y - p1.y) * ratio
+                };
+            }
+
+            function customAlert(msg, btnText = "我知道了") {
+                document.getElementById('custom-alert-text').innerHTML = msg;
+                document.getElementById('custom-alert-btn').innerText = btnText;
+                document.getElementById('custom-alert-modal').classList.remove('hidden');
+            }
+
+            function handleResize() {
+                if(images.length === 0 || !images[0].naturalWidth) return;
+                const wrapper = document.getElementById('stage-wrapper');
+                const stage = document.getElementById('stage');
+                if (!wrapper || !stage) return;
+                const availW = wrapper.clientWidth;
+                const availH = wrapper.clientHeight;
+                const imgRatio = images[0].naturalWidth / images[0].naturalHeight;
+                const availRatio = availW / availH;
+                let w, h;
+                if (availRatio > imgRatio) { w = availW; h = w / imgRatio; } else { h = availH; w = h * imgRatio; }
+                stage.style.width = `${w}px`;
+                stage.style.height = `${h}px`;
+            }
+
+            function init() {
+                els = {
+                    slider: document.getElementById('stage4_time_slider'),
+                    bgContainer: document.getElementById('stage4_bg_container'),
+                    pollenBtn: document.getElementById('stage4_draggable_pollen'),
+                    resetPollenBtn: document.getElementById('stage4_reset_pollen'),
+                    newFlowerBtn: document.getElementById('stage4_new_flower_btn'),
+                    stigmaZone: document.getElementById('stage4_stigma_zone'),
+                    svgLayer: document.getElementById('stage4_svg_layer'),
+                    stigmaPollens: document.getElementById('stage4_stigma_pollens'),
+                    uiPollen: document.getElementById('stage4_ui_pollen'),
+                    uiSeed: document.getElementById('stage4_ui_seed'),
+                    uiAbort: document.getElementById('stage4_ui_abort'),
+                    valSeed: document.getElementById('stage4_val_seed'),
+                    valAbort: document.getElementById('stage4_val_abort'),
+                    lockSeed: document.getElementById('stage4_lock_seed'),
+                    lockAbort: document.getElementById('stage4_lock_abort'),
+                    pooeModal: document.getElementById('pooe-modal'),
+                    pooePollenCount: document.getElementById('pooe-pollen-count'),
+                    pooeBtnBContent: document.getElementById('pooe-btn-b-content'),
+                    pooeMemory: document.getElementById('pooe-memory'),
+                    finalCheckToast: document.getElementById('final-check-toast'),
+                    devCoordPanel: document.getElementById('dev-coord-panel'),
+                    devCoordCurrent: document.getElementById('dev-coord-current'),
+                    devMarkersLayer: document.getElementById('dev-markers-layer'),
+                    
+                    seedImgsGreen: [
+                        document.getElementById('seed_img_0_green'), document.getElementById('seed_img_1_green'),
+                        document.getElementById('seed_img_2_green'), document.getElementById('seed_img_3_green')
+                    ],
+                    seedImgsAbort: [
+                        document.getElementById('seed_img_0_abort'), document.getElementById('seed_img_1_abort'),
+                        document.getElementById('seed_img_2_abort'), document.getElementById('seed_img_3_abort')
+                    ],
+                    tubes: [
+                        document.getElementById('tube_0'), document.getElementById('tube_1'),
+                        document.getElementById('tube_2'), document.getElementById('tube_3')
+                    ],
+
+                    lblOvary: document.getElementById('lbl_ovary'),
+                    lblFruit: document.getElementById('lbl_fruit'),
+                    lblOvules: [document.getElementById('lbl_ovule_0'), document.getElementById('lbl_ovule_1'), document.getElementById('lbl_ovule_2'), document.getElementById('lbl_ovule_3')],
+                    lblSeeds: [document.getElementById('lbl_seed_0'), document.getElementById('lbl_seed_1'), document.getElementById('lbl_seed_2'), document.getElementById('lbl_seed_3')],
+                    lblAborts: [document.getElementById('lbl_abort_0'), document.getElementById('lbl_abort_1'), document.getElementById('lbl_abort_2'), document.getElementById('lbl_abort_3')]
+                };
+
+                const track = document.getElementById('slider-ticks');
+                for(let i=0; i<maxFrames; i++) {
+                    const tick = document.createElement('div');
+                    tick.className = 'slider-tick';
+                    track.appendChild(tick);
+                }
+
+                els.tubes.forEach(tube => {
+                    const len = tube.getTotalLength() || 250;
+                    tube.style.strokeDasharray = len;
+                    tube.style.strokeDashoffset = len;
+                });
+
+                let loadedCount = 0;
+                for(let i = 0; i < maxFrames; i++) {
+                    const img = new Image();
+                    img.onload = () => { loadedCount++; if (i === 0) handleResize(); };
+                    img.src = `./${frameFiles[i]}`;
+                    img.className = 'stage4-frame';
+                    if (i === 0) img.style.opacity = 1;
+                    els.bgContainer.appendChild(img);
+                    images.push(img);
+                }
+
+                const resizeObserver = new ResizeObserver(() => handleResize());
+                resizeObserver.observe(document.getElementById('stage-wrapper'));
+                handleResize();
+
+                els.slider.addEventListener('input', handleSliderChange);
+                els.pollenBtn.addEventListener('pointerdown', dragStart);
+                els.resetPollenBtn.addEventListener('click', resetPollen);
+                els.newFlowerBtn.addEventListener('click', resetToNewFlower);
+                window.addEventListener('pointermove', dragMove);
+                window.addEventListener('pointerup', dragEnd);
+                els.pollenBtn.ondragstart = () => false;
+
+                window.addEventListener('keydown', (e) => {
+                    if (e.key === 'F12') {
+                        state.devMode = !state.devMode;
+                        els.devCoordPanel.style.display = state.devMode ? 'block' : 'none';
+                        if(!state.devMode) els.devMarkersLayer.innerHTML = '';
+                    }
+                });
+                els.svgLayer.addEventListener('mousemove', (e) => {
+                    if (!state.devMode) return;
+                    const pt = getSVGPoint(e);
+                    els.devCoordCurrent.textContent = `X: ${Math.round(pt.x)}, Y: ${Math.round(pt.y)}`;
+                });
+                els.svgLayer.addEventListener('click', (e) => {
+                    if (!state.devMode) return;
+                    const pt = getSVGPoint(e);
+                    const cx = Math.round(pt.x), cy = Math.round(pt.y);
+                    console.log(`📌 點擊座標: {x: ${cx}, y: ${cy}}`);
+                    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    circle.setAttribute("cx", cx); circle.setAttribute("cy", cy); circle.setAttribute("r", 4);
+                    circle.setAttribute("fill", "red");
+                    els.devMarkersLayer.appendChild(circle);
+                });
+
+                renderFrame();
+            }
+
+            function getSVGPoint(e) {
+                const pt = els.svgLayer.createSVGPoint();
+                pt.x = e.clientX; pt.y = e.clientY;
+                return pt.matrixTransform(els.svgLayer.getScreenCTM().inverse());
+            }
+
+            function handleSliderChange(e) {
+                let val = parseFloat(e.target.value);
+                
+                if (state.pollenCount === 0 && val > 3.0) {
+                    customAlert("沒授粉？這朵花凋萎了...", "我知道了");
+                    val = 3.0; els.slider.value = 3.0;
+                }
+                
+                if (state.pollenCount > 0 && !state.pooeAnswered && val >= 3.5) {
+                    val = 3.5; els.slider.value = 3.5;
+                    openPOOE();
+                }
+                state.exactFrame = val;
+                renderFrame();
+            }
+
+            function openPOOE() {
+                if (state.pooeTriggered) return;
+                state.pooeTriggered = true;
+                els.pooePollenCount.textContent = state.pollenCount;
+
+                els.pooeBtnBContent.innerHTML = `只有 ${state.pollenCount} 顆種子`;
+                els.pooeModal.classList.remove('hidden');
+            }
+
+            function submitPOOE(choiceLetter) {
+                let textStr = "";
+                if (choiceLetter === 'A') textStr = "長滿種子";
+                else if (choiceLetter === 'B') textStr = `只有 ${state.pollenCount} 顆種子`;
+                else if (choiceLetter === 'C') textStr = "種子無法發育";
+
+                state.pooeAnswered = true;
+                els.pooeModal.classList.add('hidden');
+                
+                els.pooeMemory.textContent = `你的推測：(${choiceLetter}) ${textStr}`;
+                els.pooeMemory.classList.remove('hidden');
+                setTimeout(() => els.pooeMemory.classList.replace('opacity-0', 'opacity-100'), 50);
+
+                // 【標點符號魔力修改】改成「讓我們看下去！」
+                customAlert("請繼續向右拖曳拉桿，觀察後續變化！", "讓我們看下去！");
+            }
+
+            function renderFrame() {
+                const lowerIndex = Math.floor(state.exactFrame); 
+                const upperIndex = Math.ceil(state.exactFrame);  
+                const ratio = state.exactFrame - lowerIndex;     
+                
+                for(let i = 1; i <= maxFrames; i++) {
+                    let op = 0;
+                    if (i === lowerIndex) op = 1 - ratio;
+                    else if (i === upperIndex) op = ratio;
+                    if (lowerIndex === upperIndex && i === lowerIndex) op = 1;
+                    images[i-1].style.opacity = op;
+                }
+
+                if (state.exactFrame >= 6.0) {
+                    els.valSeed.classList.replace('data-locked', 'data-unlocked');
+                    els.valAbort.classList.replace('data-locked', 'data-unlocked');
+                    els.lockSeed.style.display = 'none'; els.lockAbort.style.display = 'none';
+                } else {
+                    els.valSeed.classList.replace('data-unlocked', 'data-locked');
+                    els.valAbort.classList.replace('data-unlocked', 'data-locked');
+                    els.lockSeed.style.display = 'block'; els.lockAbort.style.display = 'block';
+                }
+
+                const microOpacity = state.exactFrame > 3.5 ? Math.max(0, 1 - (state.exactFrame - 3.5) / 1.0) : 1;
+                els.stigmaPollens.style.opacity = microOpacity;
+                
+                const tubeProgress = Math.max(0, Math.min(1, state.exactFrame - 2)); 
+                
+                const effectivePollen = Math.min(4, state.pollenCount);
+                els.tubes.forEach((tube, idx) => {
+                    if (idx >= (4 - effectivePollen)) {
+                        tube.style.opacity = microOpacity;
+                        const len = tube.getTotalLength() || 250;
+                        tube.style.strokeDashoffset = len * (1 - tubeProgress);
+                    } else {
+                        tube.style.opacity = 0;
+                    }
+                });
+
+                // --- ★ 按鈕與提示分鏡錯開 (延遲機制) ---
+                if (state.exactFrame >= 13.8) {
+                    if (state.pooeAnswered) {
+                        els.finalCheckToast.style.transform = 'translateY(0)';
+                        els.finalCheckToast.style.opacity = '1';
+                    }
+                    
+                    if (!state.newFlowerTimer) {
+                        state.newFlowerTimer = setTimeout(() => {
+                            if (state.exactFrame >= 13.8) {
+                                els.newFlowerBtn.style.transform = 'translateY(0)';
+                                els.newFlowerBtn.style.opacity = '1';
+                                els.newFlowerBtn.style.pointerEvents = 'auto';
+                            }
+                        }, 1200); // 延遲 1.2 秒後再跳出「新的一朵花」大按鈕
+                    }
+                } else {
+                    if (state.newFlowerTimer) {
+                        clearTimeout(state.newFlowerTimer);
+                        state.newFlowerTimer = null;
+                    }
+                    els.newFlowerBtn.style.transform = 'translateY(-150%)';
+                    els.newFlowerBtn.style.opacity = '0';
+                    els.newFlowerBtn.style.pointerEvents = 'none';
+                    
+                    els.finalCheckToast.style.transform = 'translateY(-20px)';
+                    els.finalCheckToast.style.opacity = '0';
+                }
+                // ----------------------------------------
+
+                const growthRatio = Math.max(0, Math.min(1, (state.exactFrame - 3.0) / 11.0)); 
+                const seedVisibility = state.exactFrame > 2.0 ? Math.min(1, (state.exactFrame - 2.0)) : 0;
+
+                const pOvary = getInterp(state.exactFrame, 'ovary');
+                els.lblOvary.style.left = `${(pOvary.x / 800) * 100}%`; els.lblOvary.style.top = `${(pOvary.y / 600) * 100}%`;
+                els.lblFruit.style.left = `${(pOvary.x / 800) * 100}%`; els.lblFruit.style.top = `${(pOvary.y / 600) * 100}%`;
+
+                let masterOp = 0;
+                if (state.exactFrame >= 3.0 && state.exactFrame <= 3.5) {
+                    masterOp = (state.exactFrame - 3.0) / 0.5;
+                } else if (state.exactFrame > 3.5) {
+                    masterOp = 1;
+                }
+
+                let outOp = 1;
+                if (state.exactFrame >= 7.0 && state.exactFrame <= 9.0) {
+                    outOp = 1 - (state.exactFrame - 7.0) / 2.0;
+                } else if (state.exactFrame > 9.0) {
+                    outOp = 0;
+                }
+
+                let inOp = 0;
+                if (state.exactFrame >= 8.0 && state.exactFrame <= 10.0) {
+                    inOp = (state.exactFrame - 8.0) / 2.0;
+                } else if (state.exactFrame > 10.0) {
+                    inOp = 1;
+                }
+
+                els.lblOvary.style.opacity = masterOp * outOp;
+                els.lblFruit.style.opacity = masterOp * inOp;
+
+                for (let i = 0; i < 4; i++) {
+                    const start = startCoords[i];
+                    const end = endCoords[i];
+                    
+                    const curX = start.x + (end.x - start.x) * growthRatio;
+                    const curY = start.y + (end.y - start.y) * growthRatio;
+                    
+                    const isFertilized = i >= (4 - effectivePollen);
+                    const greenImg = els.seedImgsGreen[i];
+                    const abortImg = els.seedImgsAbort[i];
+
+                    const dynamicSize = isFertilized ? (18 + 67 * growthRatio) : (12 + 8 * growthRatio);
+                    // ★ 將文字字籤移到左上角 (中心點減去半徑與適當偏移)
+                    const lblX = curX - dynamicSize * 0.4 - 5;
+                    const lblY = curY - dynamicSize * 0.4 - 5;
+
+                    if (isFertilized) {
+                        const size = dynamicSize; 
+                        greenImg.setAttribute('x', curX - size/2); greenImg.setAttribute('y', curY - size/2);
+                        greenImg.setAttribute('width', size); greenImg.setAttribute('height', size);
+                        greenImg.style.opacity = seedVisibility;
+                        abortImg.style.opacity = 0;
+                        
+                        els.lblOvules[i].style.left = `${(lblX / 800) * 100}%`;
+                        els.lblOvules[i].style.top = `${(lblY / 600) * 100}%`;
+                        els.lblSeeds[i].style.left = `${(lblX / 800) * 100}%`;
+                        els.lblSeeds[i].style.top = `${(lblY / 600) * 100}%`;
+                        els.lblAborts[i].style.left = `${(lblX / 800) * 100}%`;
+                        els.lblAborts[i].style.top = `${(lblY / 600) * 100}%`;
+                        
+                        els.lblOvules[i].style.opacity = masterOp * outOp;
+                        els.lblSeeds[i].style.opacity = masterOp * inOp;
+                        els.lblAborts[i].style.opacity = 0;
+                    } else {
+                        const size = dynamicSize; 
+                        greenImg.setAttribute('x', curX - size/2); greenImg.setAttribute('y', curY - size/2);
+                        greenImg.setAttribute('width', size); greenImg.setAttribute('height', size);
+                        
+                        abortImg.setAttribute('x', curX - size/2); abortImg.setAttribute('y', curY - size/2);
+                        abortImg.setAttribute('width', size); abortImg.setAttribute('height', size);
+                        
+                        const abortProgress = Math.max(0, Math.min(1, (growthRatio - 0.2) / 0.4));
+                        greenImg.style.opacity = seedVisibility * (1 - abortProgress);
+                        abortImg.style.opacity = seedVisibility * abortProgress;
+
+                        els.lblOvules[i].style.left = `${(lblX / 800) * 100}%`;
+                        els.lblOvules[i].style.top = `${(lblY / 600) * 100}%`;
+                        els.lblSeeds[i].style.left = `${(lblX / 800) * 100}%`;
+                        els.lblSeeds[i].style.top = `${(lblY / 600) * 100}%`;
+                        els.lblAborts[i].style.left = `${(lblX / 800) * 100}%`;
+                        els.lblAborts[i].style.top = `${(lblY / 600) * 100}%`;
+
+                        els.lblOvules[i].style.opacity = masterOp * outOp;
+                        els.lblSeeds[i].style.opacity = 0;
+                        els.lblAborts[i].style.opacity = masterOp * inOp;
+                    }
+                }
+            }
+
+            function dragStart(e) {
+                if (state.exactFrame < 1.8) {
+                    customAlert("現在還不能授粉啦", "我知道了");
+                    return;
+                }
+                
+                const rect = els.pollenBtn.getBoundingClientRect();
+                drag.ghost = els.pollenBtn.cloneNode(true);
+                drag.ghost.id = "stage4_pollen_ghost";
+                drag.ghost.style.position = "fixed";
+                drag.ghost.style.left = `${rect.left}px`; drag.ghost.style.top = `${rect.top}px`;
+                drag.ghost.style.margin = "0"; drag.ghost.style.zIndex = "9999";
+                drag.ghost.style.pointerEvents = "none";
+                document.body.appendChild(drag.ghost);
+
+                drag.offsetX = e.clientX - rect.left; drag.offsetY = e.clientY - rect.top;
+                drag.active = true;
+                els.pollenBtn.style.opacity = '0.3';
+                els.stigmaZone.classList.remove('opacity-0');
+            }
+
+            function dragMove(e) {
+                if (!drag.active || !drag.ghost) return;
+                e.preventDefault();
+                drag.ghost.style.left = `${e.clientX - drag.offsetX}px`;
+                drag.ghost.style.top = `${e.clientY - drag.offsetY}px`;
+            }
+
+            function dragEnd(e) {
+                if (!drag.active) return;
+                drag.active = false;
+                
+                els.stigmaZone.classList.add('opacity-0');
+                els.pollenBtn.style.opacity = '1';
+
+                const pollenRect = drag.ghost.getBoundingClientRect();
+                const stigmaRect = els.stigmaZone.getBoundingClientRect();
+
+                const isOverlap = !(
+                    pollenRect.right < stigmaRect.left || pollenRect.left > stigmaRect.right ||
+                    pollenRect.bottom < stigmaRect.top || pollenRect.top > stigmaRect.bottom
+                );
+
+                if (isOverlap) processPollination();
+                drag.ghost.remove(); drag.ghost = null;
+            }
+
+            function processPollination() {
+                state.pollenCount++;
+                const effectivePollen = Math.min(4, state.pollenCount);
+                
+                els.uiPollen.textContent = state.pollenCount; 
+                els.uiSeed.textContent = effectivePollen;     
+                els.uiAbort.textContent = 4 - effectivePollen;
+
+                const cx = 526 - 15 + (effectivePollen * 7) + (Math.random() * 8); 
+                const cy = 201 - 5 + (Math.random() * 8);
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("cx", cx); circle.setAttribute("cy", cy); circle.setAttribute("r", 6);
+                circle.setAttribute("fill", "#f97316"); circle.setAttribute("stroke", "#c2410c"); circle.setAttribute("stroke-width", "1.5");
+                els.stigmaPollens.appendChild(circle);
+
+                renderFrame();
+            }
+
+            function resetPollen() {
+                state.pollenCount = 0; state.pooeAnswered = false; state.pooeTriggered = false;
+                els.uiPollen.textContent = "0"; els.uiSeed.textContent = "0"; els.uiAbort.textContent = "4";
+                els.stigmaPollens.innerHTML = ""; els.slider.value = 2.0; state.exactFrame = 2.0;
+                els.tubes.forEach(t => t.style.strokeDashoffset = t.getTotalLength() || 250);
+                
+                els.pooeMemory.classList.replace('opacity-100', 'opacity-0');
+                setTimeout(() => els.pooeMemory.classList.add('hidden'), 300);
+                els.finalCheckToast.style.opacity = '0';
+                
+                renderFrame();
+            }
+
+            function resetToNewFlower() {
+                state.pollenCount = 0; state.pooeAnswered = false; state.pooeTriggered = false;
+                els.uiPollen.textContent = "0"; els.uiSeed.textContent = "0"; els.uiAbort.textContent = "4";
+                els.stigmaPollens.innerHTML = ""; els.slider.value = 1.0; state.exactFrame = 1.0;
+                els.tubes.forEach(t => t.style.strokeDashoffset = t.getTotalLength() || 250);
+                
+                els.pooeMemory.classList.replace('opacity-100', 'opacity-0');
+                setTimeout(() => els.pooeMemory.classList.add('hidden'), 300);
+                els.finalCheckToast.style.opacity = '0';
+                
+                renderFrame();
+            }
+
+            return { init, submitPOOE };
+        })();
+
+        document.addEventListener("DOMContentLoaded", () => { Stage4_Pea_App.init(); });
+    </script>
+<script src="./global_nav.js"></script>
+</body>
+</html>
