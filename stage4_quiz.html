@@ -18,109 +18,107 @@
         
         #global-layout { display: flex; flex-direction: column; width: 100%; height: 100%; }
 
+        /* ★ 全新頂部單元導覽列 (來自 stage4_gene) */
+        #sub-nav-bar {
+            width: 100%; background: white; border-bottom: 1px solid #e2e8f0;
+            display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;
+            padding: 8px 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); z-index: 90;
+            flex-shrink: 0; 
+        }
+
+        /* ★ 全新單欄式滿版排版 */
         #app-container { 
-            display: grid; 
-            grid-template-columns: clamp(240px, 25vw, 360px) minmax(0, 1fr); 
-            gap: clamp(12px, 1.5vw, 20px); 
+            display: flex; flex-direction: column;
             width: 100%; flex: 1; min-height: 0; 
-            padding: clamp(12px, 1.5vw, 20px); box-sizing: border-box; 
+            padding: clamp(12px, 1.5vw, 20px) max(20px, 5vw); /* 左右留一點呼吸空間 */
+            box-sizing: border-box; gap: 16px;
         }
 
-        #left-sidebar { display: flex; flex-direction: column; gap: clamp(8px, 1vh, 12px); height: 100%; min-height: 0; }
-        .panel-block {
-            background: white; border: 1px solid #e2e8f0; border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            display: flex; flex-direction: column; min-height: 0; 
+        /* 第一層：題目與進度橫幅 */
+        #quiz-header-card {
+            background: white; border: 1px solid #e2e8f0; border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03); padding: 20px 28px;
+            display: flex; justify-content: space-between; align-items: flex-start; gap: 24px;
+            flex-shrink: 0; 
         }
 
-        #stage-wrapper {
-            position: relative; display: flex; flex-direction: column; justify-content: flex-start; align-items: center;
-            width: 100%; height: 100%; border-radius: 16px; overflow: hidden;
-            background: white; box-shadow: 0 15px 40px rgba(0,0,0,0.12); padding: 0; min-height: 0;
-        }
-        
+        /* 第二層：滿版圖片舞台 */
         #quiz-image-container {
             width: 100%; flex: 1; min-height: 0; display: flex; justify-content: center; align-items: center;
-            background-color: #f1f5f9; position: relative; overflow: hidden;
+            background-color: #f1f5f9; border-radius: 20px; border: 1px solid #e2e8f0;
+            position: relative; overflow: hidden; box-shadow: inset 0 4px 20px rgba(0,0,0,0.02);
         }
         
+        /* 第三層：2x2 選項陣列 */
+        #quiz-options-grid {
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); /* 強制切成左右兩半 */
+            gap: 12px; flex-shrink: 0; 
+        }
+        
+        /* 圖片處理 */
         .quiz-img, .dual-img-half img {
             max-width: 100%; max-height: 100%; object-fit: contain; position: absolute;
             -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 65%, rgba(0,0,0,0) 100%);
             mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 65%, rgba(0,0,0,0) 100%);
         }
         
-        .quiz-img {
-            transition: opacity 0.4s ease-in-out; opacity: 0; pointer-events: none;
-        }
+        .quiz-img { transition: opacity 0.4s ease-in-out; opacity: 0; pointer-events: none; }
         .quiz-img.active { opacity: 1; pointer-events: auto; z-index: 10; }
         
         .dual-img-container {
-            display: flex; width: 100%; height: 100%; gap: 4px; padding: 10px; box-sizing: border-box;
+            display: flex; width: 100%; height: 100%; gap: 10px; padding: 15px; box-sizing: border-box;
             position: absolute; opacity: 0; pointer-events: none; transition: opacity 0.4s ease-in-out;
         }
         .dual-img-container.active { opacity: 1; pointer-events: auto; z-index: 10; }
         .dual-img-half { 
             flex: 1; display: flex; justify-content: center; align-items: center; 
-            overflow: hidden; background: transparent; border-radius: 8px;
+            overflow: hidden; background: transparent; border-radius: 12px;
         }
-        .dual-img-half img { position: relative; }
+        .dual-img-half img { position: relative; width: 100%; height: 100%; }
 
-        /* ★ 題目橫幅：改為底邊框，並保持 flex-shrink: 0 */
-        #quiz-question-banner {
-            width: 100%; background: white; border-bottom: 2px solid #e2e8f0;
-            padding: clamp(10px, 1.5vh, 20px) clamp(16px, 2vw, 32px); box-sizing: border-box; z-index: 20;
-            flex-shrink: 0; 
-        }
-
+        /* 選項按鈕美化 (適應 2x2 胖胖框) */
         .option-btn {
-            width: 100%; text-align: left; padding: clamp(6px, 1.2vh, 12px) 12px; margin: 0;
-            border: 2px solid #e2e8f0; border-radius: 10px; background: white;
+            width: 100%; text-align: left; padding: 16px 20px; margin: 0;
+            border: 2px solid #e2e8f0; border-radius: 16px; background: white;
             font-weight: 700; color: #475569; transition: all 0.2s; cursor: pointer;
-            display: flex; align-items: center; gap: 8px; font-size: clamp(12px, 1.3vh, 14px); line-height: 1.3;
+            display: flex; align-items: center; gap: 12px; font-size: clamp(14px, 1.5vh, 16px); line-height: 1.4;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
         }
-        .option-btn:hover { border-color: #94a3b8; background: #f8fafc; }
-        .option-btn.selected-correct { border-color: #22c55e; background: #ecfdf5; color: #166534; }
-        
+        .option-btn:hover { border-color: #94a3b8; background: #f8fafc; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.05); }
+        .option-btn.selected-correct { border-color: #22c55e; background: #ecfdf5; color: #166534; box-shadow: 0 0 0 2px rgba(34,197,94,0.2); }
         .option-btn.selected-wrong { 
             border-color: #fca5a5; background: #fef2f2; color: #ef4444; 
-            opacity: 0.5; text-decoration: line-through; pointer-events: none; 
+            opacity: 0.6; text-decoration: line-through; pointer-events: none; transform: none; box-shadow: none;
         }
         .option-btn.disabled { pointer-events: none; }
         
         .option-label { 
             display: inline-flex; justify-content: center; align-items: center; flex-shrink: 0;
-            width: 24px; height: 24px; background: #e2e8f0; border-radius: 6px; font-size: 12px; color: #64748b;
-            text-decoration: none; 
+            width: 32px; height: 32px; background: #e2e8f0; border-radius: 8px; font-size: 15px; color: #64748b; font-weight: 900;
         }
         .option-btn.selected-correct .option-label { background: #22c55e; color: white; }
         .option-btn.selected-wrong .option-label { background: #ef4444; color: white; }
 
+        /* 解析卡片 */
         #explanation-card {
             position: absolute; 
             top: 50%; left: 50%;
             transform: translate(-50%, -40%);
-            max-width: 420px; width: 90%;
+            max-width: 480px; width: 90%;
             background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px);
-            border: 2px solid #e2e8f0; border-radius: 16px; padding: clamp(16px, 2vw, 24px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2); opacity: 0;
+            border: 2px solid #e2e8f0; border-radius: 20px; padding: clamp(20px, 2vw, 30px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2); opacity: 0;
             pointer-events: none; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 50;
         }
-        #explanation-card.show { 
-            transform: translate(-50%, -50%);
-            opacity: 1; pointer-events: auto; 
-        }
+        #explanation-card.show { transform: translate(-50%, -50%); opacity: 1; pointer-events: auto; }
         
         #close-exp-btn {
-            position: absolute; top: 12px; right: 12px; cursor: pointer;
-            width: 24px; height: 24px; display: flex; justify-content: center; align-items: center;
-            background: #e2e8f0; border-radius: 50%; color: #64748b; font-size: 12px; font-weight: bold;
+            position: absolute; top: 16px; right: 16px; cursor: pointer;
+            width: 28px; height: 28px; display: flex; justify-content: center; align-items: center;
+            background: #e2e8f0; border-radius: 50%; color: #64748b; font-size: 14px; font-weight: bold; transition: all 0.2s;
         }
-        #close-exp-btn:hover { background: #cbd5e1; color: #334155; }
-
-        @media (max-width: 1180px) {
-            #question-text { font-size: 1.05rem !important; line-height: 1.4 !important;}
-        }
+        #close-exp-btn:hover { background: #cbd5e1; color: #334155; transform: scale(1.1); }
     </style>
 </head>
 <body class="select-none text-slate-800">
@@ -131,7 +129,7 @@
 
     <div id="global-layout">
         
-      <!-- 全站統一導覽列 -->
+        <!-- 全站統一導覽列 -->
         <nav id="nav-tabs-bar" class="w-full bg-slate-900 shadow-md h-14 flex items-center justify-between px-6 z-[100] flex-shrink-0 select-none">
             <div class="flex items-center gap-3">
                 <span class="text-xl">🌱</span>
@@ -147,106 +145,96 @@
             <div id="nav-stage-subtitle" class="text-xs text-slate-400 font-mono"></div>
         </nav>
 
+        <!-- ★ 釋放左側，將單元切換移至頂部 -->
+        <div id="sub-nav-bar">
+            <span class="text-sm font-extrabold text-slate-400 mr-2 tracking-wide hidden sm:inline-block">單元模式</span>
+            <button onclick="location.href='stage4.html'" class="px-4 py-1.5 rounded-lg text-sm font-bold text-slate-500 hover:bg-slate-100 transition-colors">1. 水蜜桃</button>
+            <button onclick="location.href='stage4_pea.html'" class="px-4 py-1.5 rounded-lg text-sm font-bold text-slate-500 hover:bg-slate-100 transition-colors">2. 豌豆</button>
+            <button class="px-4 py-1.5 rounded-lg text-sm font-bold bg-emerald-50 text-emerald-700 border border-emerald-300 shadow-sm transition-colors">3. 評量題目</button>
+            <button onclick="location.href='stage4_gene.html'" class="px-4 py-1.5 rounded-lg text-sm font-bold text-slate-500 hover:bg-slate-100 transition-colors">4. 遺傳概念</button>
+        </div>
+
         <div id="app-container">
             
-            <div id="left-sidebar">
+            <!-- 【第一區塊：大腦區】題目與右側狀態列 -->
+            <div id="quiz-header-card">
+                <h2 id="question-text" class="text-[1.15rem] md:text-xl font-bold text-slate-800 leading-relaxed flex-1 pt-2">
+                    載入題目中...
+                </h2>
                 
-                <div class="panel-block flex-shrink-0 px-3 py-3">
-                    <div class="text-slate-800 font-extrabold text-[13px] tracking-wider border-b pb-1 mb-2 text-center">單元模式</div>
-                    <div class="grid grid-cols-2 gap-1.5">
-                        <button onclick="location.href='stage4.html'" class="py-1.5 bg-slate-50 text-slate-500 font-bold text-[11px] rounded border border-slate-200 hover:bg-slate-100 transition-colors">1. 水蜜桃</button>
-                        <button onclick="location.href='stage4_pea.html'" class="py-1.5 bg-slate-50 text-slate-500 font-bold text-[11px] rounded border border-slate-200 hover:bg-slate-100 transition-colors">2. 豌豆</button>
-                        <button class="py-1.5 bg-emerald-50 text-emerald-700 font-bold text-[11px] rounded border border-emerald-300 shadow-sm transition-colors">3. 評量題目</button>
-                        <button onclick="location.href='stage4_gene.html'" class="py-1.5 bg-slate-50 text-slate-500 font-bold text-[11px] rounded border border-slate-200 hover:bg-slate-100 transition-colors">4. 遺傳概念</button>
+                <div class="flex flex-col items-end w-40 shrink-0 border-l-2 border-slate-100 pl-6">
+                    <div id="status-title" class="text-xs font-bold text-slate-400 mb-1">當前題號</div>
+                    <div class="flex items-baseline gap-1 text-emerald-600 mb-3" id="status-number-container">
+                        <span class="text-4xl font-black" id="quiz-current-q">1</span>
+                        <span class="text-base font-bold text-slate-400">/ 6</span>
                     </div>
-                </div>
-
-                <div class="panel-block flex-shrink-0 flex flex-col items-center justify-center py-2 px-3 relative gap-1.5">
-                    <div class="flex items-center justify-between w-full px-2">
-                        <div id="status-title" class="text-[12px] font-bold text-slate-400 transition-colors">當前題號</div>
-                        <div class="flex items-baseline gap-1 text-emerald-600 transition-transform" id="status-number-container">
-                            <span class="text-2xl font-black" id="quiz-current-q">1</span>
-                            <span class="text-xs font-bold text-slate-400">/ 6</span>
-                        </div>
-                    </div>
-                    
-                    <div class="flex gap-1.5 w-full justify-center px-2 my-1" id="quiz-progress-dots"></div>
-
-                    <button id="btn-next-q" class="w-full py-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg shadow-sm transition-all text-xs hidden">
+                    <div class="flex gap-1.5 justify-end w-full mb-3" id="quiz-progress-dots"></div>
+                    <button id="btn-next-q" class="w-full py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg shadow-md transition-all text-sm hidden">
                         下一題 ➡️
                     </button>
                 </div>
-
-                <div class="panel-block flex-1 flex flex-col bg-slate-50 border-slate-200 justify-between p-3">
-                    <div class="text-[13px] font-extrabold text-slate-700 mb-1.5 border-b border-slate-200 pb-1 flex-shrink-0">請選擇正確答案：</div>
-                    <div id="quiz-options-container" class="flex flex-col flex-1 justify-around gap-1.5"></div>
-                </div>
             </div>
 
-            <div id="stage-wrapper">
+            <!-- 【第二區塊：視覺區】滿版大舞台 -->
+            <div id="quiz-image-container">
                 
-                <!-- ★ 將題目區塊移至圖片區塊之上，符合先看題再看圖的閱讀動線 -->
-                <div id="quiz-question-banner">
-                    <h2 id="question-text" class="text-[1.1rem] font-bold text-slate-800 leading-relaxed">
-                        載入題目中...
-                    </h2>
+                <!-- 解析卡片疊加在圖片之上 -->
+                <div id="explanation-card">
+                    <div id="close-exp-btn" onclick="document.getElementById('explanation-card').classList.remove('show')">✕</div>
+                    <div class="flex items-center gap-2 text-emerald-600 font-black text-xl mb-3">
+                        <span id="exp-icon">💡</span>
+                        <span id="exp-title">觀念解析</span>
+                    </div>
+                    <p id="exp-content" class="text-[15px] font-bold text-slate-700 leading-relaxed">
+                        解析內容...
+                    </p>
                 </div>
 
-                <div id="quiz-image-container">
-                    
-                    <!-- 提示與解析卡片 -->
-                    <div id="explanation-card">
-                        <div id="close-exp-btn" onclick="document.getElementById('explanation-card').classList.remove('show')">✕</div>
-                        <div class="flex items-center gap-2 text-emerald-600 font-black text-lg mb-2">
-                            <span id="exp-icon">💡</span>
-                            <span id="exp-title">觀念解析</span>
-                        </div>
-                        <p id="exp-content" class="text-[14px] font-bold text-slate-700 leading-relaxed">
-                            解析內容...
-                        </p>
-                    </div>
-
-                    <!-- Q1 -->
-                    <div id="q1-dual" class="dual-img-container active">
-                        <div class="dual-img-half"><img src="./mt02.png" alt="水蜜桃開花"></div>
-                        <div class="dual-img-half"><img src="./mt16.png" alt="水蜜桃果實"></div>
-                    </div>
-                    
-                    <!-- Q2 -->
-                    <div id="q2-dual" class="dual-img-container">
-                        <div class="dual-img-half"><img src="./p02.png" alt="豌豆開花"></div>
-                        <div class="dual-img-half"><img src="./p16.png" alt="豌豆果莢"></div>
-                    </div>
-
-                    <!-- Q3 -->
-                    <div id="q3-dual" class="dual-img-container">
-                        <div class="dual-img-half"><img src="./grape2.png" alt="葡萄花"></div>
-                        <div class="dual-img-half"><img src="./grape1.png" alt="葡萄果串"></div>
-                    </div>
-
-                    <!-- Q4 -->
-                    <div id="q4-dual" class="dual-img-container">
-                        <div class="dual-img-half"><img src="./sunflower3.png" alt="向日葵外觀"></div>
-                        <div class="dual-img-half"><img id="q4-sunflower-right" src="./sunflower1.png" alt="向日葵剖面"></div>
-                    </div>
-
-                    <!-- Q5 草莓 -->
-                    <img id="q5-img-initial" src="./strawberry3.png" class="quiz-img" alt="草莓花外觀">
-                    <div id="q5-dual-result" class="dual-img-container">
-                        <div class="dual-img-half"><img src="./strawberry2.png" alt="草莓花剖面"></div>
-                        <div class="dual-img-half"><img src="./strawberry1.png" alt="草莓果實剖面"></div>
-                    </div>
-
-                    <!-- Q6 火龍果 -->
-                    <div id="q6-dual" class="dual-img-container">
-                        <div class="dual-img-half"><img src="./hl2.png" alt="火龍果花剖面"></div>
-                        <div class="dual-img-half"><img src="./hl1.png" alt="火龍果果實剖面"></div>
-                    </div>
-                    <img id="q6-img-result" src="./hl3.png" class="quiz-img" alt="火龍果海葵狀柱頭">
-
+                <!-- Q1 -->
+                <div id="q1-dual" class="dual-img-container active">
+                    <div class="dual-img-half"><img src="./mt02.png" alt="水蜜桃開花"></div>
+                    <div class="dual-img-half"><img src="./mt16.png" alt="水蜜桃果實"></div>
                 </div>
+                
+                <!-- Q2 -->
+                <div id="q2-dual" class="dual-img-container">
+                    <div class="dual-img-half"><img src="./p02.png" alt="豌豆開花"></div>
+                    <div class="dual-img-half"><img src="./p16.png" alt="豌豆果莢"></div>
+                </div>
+
+                <!-- Q3 -->
+                <div id="q3-dual" class="dual-img-container">
+                    <div class="dual-img-half"><img src="./grape2.png" alt="葡萄花"></div>
+                    <div class="dual-img-half"><img src="./grape1.png" alt="葡萄果串"></div>
+                </div>
+
+                <!-- Q4 -->
+                <div id="q4-dual" class="dual-img-container">
+                    <div class="dual-img-half"><img src="./sunflower3.png" alt="向日葵外觀"></div>
+                    <div class="dual-img-half"><img id="q4-sunflower-right" src="./sunflower1.png" alt="向日葵剖面"></div>
+                </div>
+
+                <!-- Q5 草莓 -->
+                <img id="q5-img-initial" src="./strawberry3.png" class="quiz-img" alt="草莓花外觀">
+                <div id="q5-dual-result" class="dual-img-container">
+                    <div class="dual-img-half"><img src="./strawberry2.png" alt="草莓花剖面"></div>
+                    <div class="dual-img-half"><img src="./strawberry1.png" alt="草莓果實剖面"></div>
+                </div>
+
+                <!-- Q6 火龍果 -->
+                <div id="q6-dual" class="dual-img-container">
+                    <div class="dual-img-half"><img src="./hl2.png" alt="火龍果花剖面"></div>
+                    <div class="dual-img-half"><img src="./hl1.png" alt="火龍果果實剖面"></div>
+                </div>
+                <img id="q6-img-result" src="./hl3.png" class="quiz-img" alt="火龍果海葵狀柱頭">
 
             </div>
+
+            <!-- 【第三區塊：操作區】2x2 選項陣列 -->
+            <div id="quiz-options-grid">
+                <!-- 選項將由 JS 動態填入這裡 -->
+            </div>
+
         </div>
     </div>
 
@@ -256,7 +244,6 @@
                 {
                     id: 1,
                     targetImgId: 'q1-dual',
-                    /* ★ HTML 標籤注入：將「錯誤」兩字以深紅色、底線、粗體醒目提示 */
                     question: "水蜜桃切開後中央只有一顆堅硬的果核。關於水蜜桃的花朵構造與果實發育，下列敘述何者<span class='text-rose-600 font-black underline decoration-rose-500 underline-offset-4 mx-0.5'>錯誤</span>？",
                     options: [
                         "花朵的子房內部通常只有 1 顆胚珠",
@@ -339,7 +326,7 @@
             let isReviewMode = false;
 
             const elQuestionText = document.getElementById('question-text');
-            const elOptionsContainer = document.getElementById('quiz-options-container');
+            const elOptionsContainer = document.getElementById('quiz-options-grid'); /* 修改綁定到新的 Grid 容器 */
             const elCurrentQ = document.getElementById('quiz-current-q');
             const elProgressDots = document.getElementById('quiz-progress-dots');
             const elBtnNext = document.getElementById('btn-next-q');
@@ -381,7 +368,6 @@
                 const q = questions[index];
                 
                 elCurrentQ.textContent = index + 1;
-                /* ★ 使用 innerHTML 以渲染 Tailwind HTML 標籤 */
                 elQuestionText.innerHTML = q.question;
                 
                 document.querySelectorAll('.quiz-img, .dual-img-container').forEach(img => {
@@ -456,7 +442,7 @@
                             elBtnNext.classList.remove('hidden');
                         } else {
                             elBtnNext.innerHTML = '🎉 恭喜完成！開啟自由複習';
-                            elBtnNext.className = 'w-full py-1.5 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-black rounded-lg shadow-sm transition-all text-xs animate-bounce mt-1';
+                            elBtnNext.className = 'w-full py-2 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-black rounded-lg shadow-sm transition-all text-sm animate-bounce mt-1';
                             elBtnNext.classList.remove('hidden');
                         }
                     }
