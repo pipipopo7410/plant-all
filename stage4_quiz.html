@@ -6,7 +6,7 @@
     <title>植物總複習 - 階段四：評量題目</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* ★ 強制橫屏防護網 */
+        /* 強制橫屏防護網 */
         #orientation-warning { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: #0f172a; color: white; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; font-size: 1.5em; text-align: center; padding: 20px; box-sizing: border-box; }
         @media (orientation: portrait) { #orientation-warning { display: flex; } }
 
@@ -18,7 +18,6 @@
         
         #global-layout { display: flex; flex-direction: column; width: 100%; height: 100%; }
 
-        /* ★ 全新頂部單元導覽列 (來自 stage4_gene) */
         #sub-nav-bar {
             width: 100%; background: white; border-bottom: 1px solid #e2e8f0;
             display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;
@@ -26,37 +25,34 @@
             flex-shrink: 0; 
         }
 
-        /* ★ 全新單欄式滿版排版 */
         #app-container { 
             display: flex; flex-direction: column;
             width: 100%; flex: 1; min-height: 0; 
-            padding: clamp(12px, 1.5vw, 20px) max(20px, 5vw); /* 左右留一點呼吸空間 */
-            box-sizing: border-box; gap: 16px;
+            padding: clamp(10px, 1.5vw, 16px) max(16px, 5vw); 
+            box-sizing: border-box; gap: 12px; /* 縮小大區塊間距 */
         }
 
-        /* 第一層：題目與進度橫幅 */
+        /* ★ 修改點 1：題目橫幅極限壓縮，並設定 align-items: center 強制置中 */
         #quiz-header-card {
-            background: white; border: 1px solid #e2e8f0; border-radius: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03); padding: 20px 28px;
-            display: flex; justify-content: space-between; align-items: flex-start; gap: 24px;
+            background: white; border: 1px solid #e2e8f0; border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03); 
+            padding: 12px 24px; /* 大幅削減上下 padding */
+            display: flex; justify-content: space-between; align-items: center; gap: 20px;
             flex-shrink: 0; 
         }
 
-        /* 第二層：滿版圖片舞台 */
         #quiz-image-container {
             width: 100%; flex: 1; min-height: 0; display: flex; justify-content: center; align-items: center;
-            background-color: #f1f5f9; border-radius: 20px; border: 1px solid #e2e8f0;
+            background-color: #f1f5f9; border-radius: 16px; border: 1px solid #e2e8f0;
             position: relative; overflow: hidden; box-shadow: inset 0 4px 20px rgba(0,0,0,0.02);
         }
         
-        /* 第三層：2x2 選項陣列 */
         #quiz-options-grid {
             display: grid; 
-            grid-template-columns: repeat(2, 1fr); /* 強制切成左右兩半 */
+            grid-template-columns: repeat(2, 1fr); 
             gap: 12px; flex-shrink: 0; 
         }
         
-        /* 圖片處理 */
         .quiz-img, .dual-img-half img {
             max-width: 100%; max-height: 100%; object-fit: contain; position: absolute;
             -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 65%, rgba(0,0,0,0) 100%);
@@ -67,7 +63,7 @@
         .quiz-img.active { opacity: 1; pointer-events: auto; z-index: 10; }
         
         .dual-img-container {
-            display: flex; width: 100%; height: 100%; gap: 10px; padding: 15px; box-sizing: border-box;
+            display: flex; width: 100%; height: 100%; gap: 10px; padding: 10px; box-sizing: border-box;
             position: absolute; opacity: 0; pointer-events: none; transition: opacity 0.4s ease-in-out;
         }
         .dual-img-container.active { opacity: 1; pointer-events: auto; z-index: 10; }
@@ -77,15 +73,14 @@
         }
         .dual-img-half img { position: relative; width: 100%; height: 100%; }
 
-        /* 選項按鈕美化 (適應 2x2 胖胖框) */
         .option-btn {
-            width: 100%; text-align: left; padding: 16px 20px; margin: 0;
-            border: 2px solid #e2e8f0; border-radius: 16px; background: white;
+            width: 100%; text-align: left; padding: 12px 16px; margin: 0;
+            border: 2px solid #e2e8f0; border-radius: 12px; background: white;
             font-weight: 700; color: #475569; transition: all 0.2s; cursor: pointer;
-            display: flex; align-items: center; gap: 12px; font-size: clamp(14px, 1.5vh, 16px); line-height: 1.4;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            display: flex; align-items: center; gap: 10px; font-size: clamp(13px, 1.4vh, 15px); line-height: 1.3;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
-        .option-btn:hover { border-color: #94a3b8; background: #f8fafc; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.05); }
+        .option-btn:hover { border-color: #94a3b8; background: #f8fafc; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
         .option-btn.selected-correct { border-color: #22c55e; background: #ecfdf5; color: #166534; box-shadow: 0 0 0 2px rgba(34,197,94,0.2); }
         .option-btn.selected-wrong { 
             border-color: #fca5a5; background: #fef2f2; color: #ef4444; 
@@ -95,12 +90,11 @@
         
         .option-label { 
             display: inline-flex; justify-content: center; align-items: center; flex-shrink: 0;
-            width: 32px; height: 32px; background: #e2e8f0; border-radius: 8px; font-size: 15px; color: #64748b; font-weight: 900;
+            width: 28px; height: 28px; background: #e2e8f0; border-radius: 6px; font-size: 14px; color: #64748b; font-weight: 900;
         }
         .option-btn.selected-correct .option-label { background: #22c55e; color: white; }
         .option-btn.selected-wrong .option-label { background: #ef4444; color: white; }
 
-        /* 解析卡片 */
         #explanation-card {
             position: absolute; 
             top: 50%; left: 50%;
@@ -129,7 +123,6 @@
 
     <div id="global-layout">
         
-        <!-- 全站統一導覽列 -->
         <nav id="nav-tabs-bar" class="w-full bg-slate-900 shadow-md h-14 flex items-center justify-between px-6 z-[100] flex-shrink-0 select-none">
             <div class="flex items-center gap-3">
                 <span class="text-xl">🌱</span>
@@ -145,7 +138,6 @@
             <div id="nav-stage-subtitle" class="text-xs text-slate-400 font-mono"></div>
         </nav>
 
-        <!-- ★ 釋放左側，將單元切換移至頂部 -->
         <div id="sub-nav-bar">
             <span class="text-sm font-extrabold text-slate-400 mr-2 tracking-wide hidden sm:inline-block">單元模式</span>
             <button onclick="location.href='stage4.html'" class="px-4 py-1.5 rounded-lg text-sm font-bold text-slate-500 hover:bg-slate-100 transition-colors">1. 水蜜桃</button>
@@ -156,29 +148,36 @@
 
         <div id="app-container">
             
-            <!-- 【第一區塊：大腦區】題目與右側狀態列 -->
+            <!-- 【大腦區】題目與右側狀態列 (極限壓縮高度版) -->
             <div id="quiz-header-card">
-                <h2 id="question-text" class="text-[1.15rem] md:text-xl font-bold text-slate-800 leading-relaxed flex-1 pt-2">
+                <!-- ★ 修改點 2：字體縮小，取消 padding，完全靠 align-items: center 來置中 -->
+                <h2 id="question-text" class="text-[15px] md:text-base font-bold text-slate-800 leading-relaxed flex-1 m-0">
                     載入題目中...
                 </h2>
                 
-                <div class="flex flex-col items-end w-40 shrink-0 border-l-2 border-slate-100 pl-6">
-                    <div id="status-title" class="text-xs font-bold text-slate-400 mb-1">當前題號</div>
-                    <div class="flex items-baseline gap-1 text-emerald-600 mb-3" id="status-number-container">
-                        <span class="text-4xl font-black" id="quiz-current-q">1</span>
-                        <span class="text-base font-bold text-slate-400">/ 6</span>
+                <!-- ★ 修改點 3：右側狀態列「橫向扁平化」，把 3 行濃縮成 2 行 -->
+                <div class="flex flex-col items-end w-32 shrink-0 border-l-2 border-slate-100 pl-4 justify-center">
+                    <div class="flex items-center gap-2 mb-1.5">
+                        <span class="text-xs font-bold text-slate-400">題號</span>
+                        <div class="flex items-baseline gap-0.5 text-emerald-600" id="status-number-container">
+                            <span class="text-2xl font-black" id="quiz-current-q">1</span>
+                            <span class="text-xs font-bold text-slate-400">/ 6</span>
+                        </div>
                     </div>
-                    <div class="flex gap-1.5 justify-end w-full mb-3" id="quiz-progress-dots"></div>
-                    <button id="btn-next-q" class="w-full py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg shadow-md transition-all text-sm hidden">
+                    
+                    <div class="flex gap-1 justify-end w-full" id="quiz-progress-dots"></div>
+                    
+                    <!-- 按鈕高度一併壓縮 -->
+                    <button id="btn-next-q" class="w-full py-1.5 mt-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg shadow-sm transition-all text-[13px] hidden">
                         下一題 ➡️
                     </button>
                 </div>
             </div>
 
-            <!-- 【第二區塊：視覺區】滿版大舞台 -->
+            <!-- 【視覺區】滿版大舞台 -->
             <div id="quiz-image-container">
                 
-                <!-- 解析卡片疊加在圖片之上 -->
+                <!-- 解析卡片 -->
                 <div id="explanation-card">
                     <div id="close-exp-btn" onclick="document.getElementById('explanation-card').classList.remove('show')">✕</div>
                     <div class="flex items-center gap-2 text-emerald-600 font-black text-xl mb-3">
@@ -230,7 +229,7 @@
 
             </div>
 
-            <!-- 【第三區塊：操作區】2x2 選項陣列 -->
+            <!-- 【操作區】2x2 選項陣列 -->
             <div id="quiz-options-grid">
                 <!-- 選項將由 JS 動態填入這裡 -->
             </div>
@@ -326,7 +325,7 @@
             let isReviewMode = false;
 
             const elQuestionText = document.getElementById('question-text');
-            const elOptionsContainer = document.getElementById('quiz-options-grid'); /* 修改綁定到新的 Grid 容器 */
+            const elOptionsContainer = document.getElementById('quiz-options-grid');
             const elCurrentQ = document.getElementById('quiz-current-q');
             const elProgressDots = document.getElementById('quiz-progress-dots');
             const elBtnNext = document.getElementById('btn-next-q');
@@ -335,13 +334,11 @@
             const elExpIcon = document.getElementById('exp-icon');
             const elExpTitle = document.getElementById('exp-title');
             const elExpContent = document.getElementById('exp-content');
-            
-            const elStatusTitle = document.getElementById('status-title');
 
             function init() {
                 questions.forEach((_, idx) => {
                     const dot = document.createElement('div');
-                    dot.className = `w-3 h-3 rounded-full border-2 transition-all ${idx === 0 ? 'bg-emerald-500 border-emerald-500' : 'bg-slate-200 border-slate-200'}`;
+                    dot.className = `w-2.5 h-2.5 rounded-full border-2 transition-all ${idx === 0 ? 'bg-emerald-500 border-emerald-500' : 'bg-slate-200 border-slate-200'}`;
                     dot.id = `dot-${idx}`;
                     dot.onclick = () => {
                         if (isReviewMode) {
@@ -441,8 +438,9 @@
                             elBtnNext.innerHTML = '下一題 ➡️';
                             elBtnNext.classList.remove('hidden');
                         } else {
-                            elBtnNext.innerHTML = '🎉 恭喜完成！開啟自由複習';
-                            elBtnNext.className = 'w-full py-2 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-black rounded-lg shadow-sm transition-all text-sm animate-bounce mt-1';
+                            elBtnNext.innerHTML = '🎉 開啟自由複習';
+                            /* ★ 修改點 4：調整按鈕壓扁後的類別樣式 (py-1.5, text-sm) */
+                            elBtnNext.className = 'w-full py-1.5 mt-2 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-black rounded-lg shadow-sm transition-all text-[13px] animate-bounce';
                             elBtnNext.classList.remove('hidden');
                         }
                     }
@@ -480,10 +478,6 @@
             function enableReviewMode() {
                 isReviewMode = true;
                 elBtnNext.classList.add('hidden'); 
-                
-                elStatusTitle.textContent = "自由複習模式 (請點擊燈號)";
-                elStatusTitle.classList.replace('text-slate-400', 'text-amber-500');
-                
                 updateDots();
             }
 
@@ -494,18 +488,18 @@
                     if (isReviewMode) {
                         dot.classList.add('cursor-pointer', 'hover:scale-125');
                         if (idx === currentQIndex) {
-                            dot.className = 'w-3 h-3 rounded-full border-2 transition-all cursor-pointer hover:scale-125 bg-white border-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)] scale-110';
+                            dot.className = 'w-2.5 h-2.5 rounded-full border-2 transition-all cursor-pointer hover:scale-125 bg-white border-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)] scale-110';
                         } else {
-                            dot.className = 'w-3 h-3 rounded-full border-2 transition-all cursor-pointer hover:scale-125 bg-emerald-400 border-emerald-400 opacity-60';
+                            dot.className = 'w-2.5 h-2.5 rounded-full border-2 transition-all cursor-pointer hover:scale-125 bg-emerald-400 border-emerald-400 opacity-60';
                         }
                     } else {
                         dot.classList.remove('cursor-pointer', 'hover:scale-125');
                         if (idx < currentQIndex) {
-                            dot.className = 'w-3 h-3 rounded-full border-2 transition-colors bg-emerald-500 border-emerald-500';
+                            dot.className = 'w-2.5 h-2.5 rounded-full border-2 transition-colors bg-emerald-500 border-emerald-500';
                         } else if (idx === currentQIndex) {
-                            dot.className = 'w-3 h-3 rounded-full border-2 transition-colors bg-white border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]';
+                            dot.className = 'w-2.5 h-2.5 rounded-full border-2 transition-colors bg-white border-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]';
                         } else {
-                            dot.className = 'w-3 h-3 rounded-full border-2 transition-colors bg-slate-200 border-slate-200';
+                            dot.className = 'w-2.5 h-2.5 rounded-full border-2 transition-colors bg-slate-200 border-slate-200';
                         }
                     }
                 });
