@@ -7,7 +7,7 @@
         const style = document.createElement('style');
         style.id = 'global-responsive-styles';
         style.innerHTML = `
-            /* 針對平板尺寸 (1180px 以下) 啟動強勢空間壓縮 */
+            /* 針對平板尺寸 (1180px 以下) 啟動強勢空間重新分配 */
             @media (max-width: 1180px) {
                 
                 /* 1. 導覽列：微幅縮小字體與按鈕間距，確保不換行 */
@@ -19,23 +19,42 @@
                 #nav-phylo-badge { padding: 4px 8px !important; font-size: 11px !important; margin-left: 4px !important; }
                 #nav-phylo-badge span:last-child { display: none; } 
 
-                /* 2. 左側主面板：整體等比縮小 20%，強制讓出中央腹地 */
-                /* 抓取 main 的第一個子元素 (即所有分頁的左側操作列) */
+                /* ======================================================== */
+                /* 2. 終極殺招：破解 Safari Flexbox 幽靈空間 Bug */
+                /* 將原本的 Flex 佈局強制轉為 Grid 佈局，直接暴力劃分地盤 */
+                /* ======================================================== */
+                main {
+                    display: grid !important;
+                    grid-template-columns: 260px 1fr !important; /* 左邊嚴格鎖死 260px，剩下全部給右邊！ */
+                }
+
+                /* 解除左側面板原本所有的寬度限制，強迫它順應 Grid 的 260px */
                 main > div:first-child {
-                    zoom: 0.8 !important; 
+                    width: 100% !important;
+                    min-width: 0 !important;
+                    max-width: 100% !important;
+                    overflow-x: hidden !important; /* 隱藏稍微超出邊界的陰影或元素 */
                 }
 
-                /* 3. 畫布內的浮動視窗 (右上環境設定、左下長條圖)：整體等比縮小 25% */
-                /* 這樣浮動視窗就不會撞到中央的植物 */
-                #canvas > div.absolute {
-                    zoom: 0.75 !important;
-                }
-
-                /* 4. 中央底圖防裁切：順應真實可視區，自然貼合底部 */
+                /* 解除右側畫布原本的限制，強迫它瘋狂填滿剩下的 1fr 空間 */
                 #canvas {
+                    width: 100% !important;
+                    min-width: 0 !important;
                     border-radius: 12px !important; 
                     box-shadow: inset 0 0 20px rgba(0,0,0,0.03) !important;
                 }
+
+                /* 3. 畫布內的浮動視窗 (右上環境設定、左下長條圖)：確實縮小 25% 並貼緊邊緣 */
+                #canvas > div.absolute[class*="right-"] {
+                    transform: scale(0.75) !important;
+                    transform-origin: top right !important;
+                }
+                #canvas > div.absolute[class*="left-"] {
+                    transform: scale(0.75) !important;
+                    transform-origin: bottom left !important;
+                }
+
+                /* 4. 中央底圖防裁切：順應擴大後的畫布，自然貼合底部 */
                 #canvas img.absolute.inset-0.w-full.h-full {
                     object-fit: contain !important;
                     object-position: center bottom !important;
