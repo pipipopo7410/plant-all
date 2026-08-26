@@ -7,16 +7,21 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body, html { 
-            margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; 
+            margin: 0; padding: 0; width: 100vw; height: 100dvh; overflow: hidden; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             background-color: #f1f5f9; 
         }
         
         #global-layout { display: flex; flex-direction: column; width: 100%; height: 100%; }
 
+        /* ★ 修改點 1：導入 clamp 彈性網格，讓左側面板在筆電維持 320px，在平板自動縮到 240px */
         #app-container { 
-            display: grid; grid-template-columns: 320px 1fr; gap: 20px; 
-            width: 100%; flex: 1; min-height: 0; padding: 20px; box-sizing: border-box; 
+            display: grid; 
+            grid-template-columns: clamp(240px, 24vw, 320px) minmax(0, 1fr); 
+            gap: clamp(10px, 1.5vw, 20px); 
+            width: 100%; flex: 1; min-height: 0; 
+            padding: clamp(10px, 1.5vw, 20px); 
+            box-sizing: border-box; 
         }
 
         #left-sidebar { display: flex; flex-direction: column; gap: 15px; height: 100%; }
@@ -35,14 +40,18 @@
 
         #stage-wrapper {
             position: relative; display: flex; justify-content: center; align-items: center;
-            width: 100%; height: 100%; border-radius: 16px; overflow: hidden;
+            width: 100%; height: 100%; min-width: 0; min-height: 0; border-radius: 16px; overflow: hidden;
             box-shadow: inset 0 0 20px rgba(0,0,0,0.05); transition: background-color 0.8s ease;
         }
         
-        #stage { position: relative; aspect-ratio: 4 / 3; width: 100%; height: 100%; max-width: 100%; max-height: 100%; }
+        /* ★ 修改點 2：拔除 height: 100% 的綁架，讓畫布堅守 4:3 比例不變形 */
+        #stage { 
+            position: relative; aspect-ratio: 4 / 3; width: 100%; height: auto; 
+            max-width: 100%; max-height: 100%; flex: 0 0 auto; 
+        }
         
-        #bg-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 1; }
-        #bg-withered { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 2; opacity: 0; transition: opacity 0.5s ease; }
+        #bg-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; object-position: bottom; z-index: 1; }
+        #bg-withered { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; object-position: bottom; z-index: 2; opacity: 0; transition: opacity 0.5s ease; }
         #sim-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 3; pointer-events: auto; } 
 
         #celestial-body { position: absolute; top: 20px; right: 30px; font-size: 4.5rem; transition: transform 0.8s ease, filter 0.8s ease, opacity 0.8s ease; pointer-events: none; z-index: 10; }
@@ -50,26 +59,39 @@
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-15px) rotate(-2deg); } 75% { transform: translateX(15px) rotate(2deg); } }
         .animate-shake { animation: shake 0.4s ease-in-out; }
 
+        /* ★ 修改點 3：將圖表尺寸改為比例縮放，避免在窄螢幕互撞 */
         #vertical-charts {
-            position: absolute; right: 4%; bottom: 8%; width: 380px; height: 340px;
+            position: absolute; right: 4%; bottom: 8%; 
+            width: min(380px, 42%); height: min(340px, 48%);
             background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(4px);
             border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); border: 1px solid #e2e8f0;
-            display: flex; justify-content: space-around; align-items: flex-end; padding: 22px 18px; z-index: 20;
+            display: flex; justify-content: space-around; align-items: flex-end; 
+            padding: clamp(10px, 2%, 22px) clamp(8px, 1.5%, 18px); box-sizing: border-box; z-index: 20;
             transition: opacity 0.5s;
         }
-        .v-bar-container { width: 48px; height: 210px; background: #e2e8f0; border-radius: 8px; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end;}
+        .v-bar-container { width: clamp(28px, 10%, 48px); height: clamp(120px, 60%, 210px); background: #e2e8f0; border-radius: 8px; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end;}
         .v-bar { width: 100%; transition: height 0.3s ease; }
 
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+        /* ★ 修改點 4：針對 iPad 直式 (小於 800px) 自動轉為上下排列，確保極限狀態不破版 */
+        @media (max-width: 800px) {
+            #app-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto minmax(0, 1fr);
+                overflow-y: auto;
+            }
+            #left-sidebar { height: auto; }
+            #stage-wrapper { min-height: 0; }
+        }
     </style>
 </head>
 <body class="select-none text-slate-800">
 
     <div id="global-layout">
         
-        <!-- 統一標準版頂部導覽列 (加入網頁跳轉) -->
-       <!-- 全站統一導覽列 -->
+        <!-- 全站統一導覽列 -->
         <nav id="nav-tabs-bar" class="w-full bg-slate-900 shadow-md h-14 flex items-center justify-between px-6 z-[100] flex-shrink-0 select-none">
             <div class="flex items-center gap-3">
                 <span class="text-xl">🌱</span>
@@ -152,7 +174,7 @@
             <div id="stage-wrapper">
                 <div id="stage">
                     <div id="celestial-body">☀️</div>
-                    <img id="bg-image" src="02.png" alt="植物底圖" onerror="this.src='01.png'">
+                    <img id="bg-image" src="01.png" alt="植物底圖" onerror="this.src='01.png'">
                     <img id="bg-withered" src="03.png" alt="枯萎圖" onerror="this.style.display='none'">
                     
                     <div id="vertical-charts">
