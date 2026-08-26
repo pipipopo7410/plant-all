@@ -6,19 +6,22 @@
     <title>植物總複習 - 階段四：豌豆的生殖與果實</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* ★ 修改點 1：改用 100dvh 避免行動裝置被位址列吃掉高度 */
         body, html { 
-            margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; 
+            margin: 0; padding: 0; width: 100vw; height: 100dvh; overflow: hidden; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             background-color: #f8fafc; 
         }
         
         #global-layout { display: flex; flex-direction: column; width: 100%; height: 100%; }
 
+        /* ★ 修改點 2：導入與 Stage 2,3,4 一致的 clamp 彈性網格，讓出中央畫布空間 */
         #app-container { 
             display: grid; 
-            grid-template-columns: clamp(320px, 25vw, 400px) 1fr; 
-            gap: 20px; 
-            width: 100%; flex: 1; min-height: 0; padding: 20px; box-sizing: border-box; 
+            grid-template-columns: clamp(240px, 24vw, 320px) minmax(0, 1fr); 
+            gap: clamp(10px, 1.5vw, 20px); 
+            width: 100%; flex: 1; min-height: 0; 
+            padding: clamp(10px, 1.5vw, 20px); box-sizing: border-box; 
         }
 
         #left-sidebar { display: flex; flex-direction: column; gap: 15px; height: 100%; }
@@ -38,13 +41,20 @@
         }
         input[type=range]::-webkit-slider-thumb:active { transform: scale(1.15); }
 
+        /* ★ 修改點 3：加入舞台防護罩 wrapper，解除高度綁架 */
         #stage-wrapper {
             position: relative; display: flex; justify-content: center; align-items: center;
-            width: 100%; height: 100%; border-radius: 16px; overflow: hidden;
+            width: 100%; height: 100%; min-width: 0; min-height: 0; border-radius: 16px; overflow: hidden;
             background: white; box-shadow: 0 15px 40px rgba(0,0,0,0.12);
         }
         
-        #stage { position: relative; flex-shrink: 0; background: transparent; }
+        /* ★ 修改點 4：鎖定比例 aspect-ratio，保證豌豆 SVG 座標與底圖絕對精準對齊 */
+        #stage { 
+            position: relative; aspect-ratio: 4 / 3; width: 100%; height: auto;
+            max-width: 100%; max-height: 100%; flex: 0 0 auto;
+            background: transparent; 
+        }
+        
         #stage4_bg_container { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; background: white; }
         .stage4-frame { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; will-change: opacity; background-color: white; }
 
@@ -73,6 +83,25 @@
             text-shadow: 0 0 4px rgba(255,255,255,1), 0 0 6px rgba(255,255,255,0.9);
             pointer-events: none;
             will-change: transform, opacity;
+        }
+
+        /* ★ 修改點 5：側邊欄內部文字自適應 (解決擠壓換行與數值重疊) */
+        @media (max-width: 1180px) {
+            .panel-block { padding: 12px !important; }
+            #left-sidebar .text-5xl { font-size: 2rem !important; line-height: 1 !important; }
+            #left-sidebar .text-sm { font-size: 0.75rem !important; }
+        }
+
+        /* ★ 修改點 6：針對 iPad 直式 (小於 800px) 自動轉為上下排列 */
+        @media (max-width: 800px) {
+            body, html { touch-action: auto; overflow-y: auto; height: auto; min-height: 100dvh; }
+            #app-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto minmax(0, 1fr);
+                overflow-y: auto;
+            }
+            #left-sidebar { height: auto; }
+            #stage-wrapper { min-height: 55vh; }
         }
     </style>
 </head>
@@ -173,7 +202,6 @@
 
             <div id="stage-wrapper">
                 
-                <!-- 【按鈕放大與錯開顯示】加大尺寸: text-2xl py-4 px-8 -->
                 <button id="stage4_new_flower_btn" class="absolute top-6 right-6 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-2xl py-4 px-8 rounded-full shadow-[0_8px_20px_rgba(16,185,129,0.4)] transform -translate-y-[150%] opacity-0 transition-all duration-500 z-50 flex items-center gap-2 pointer-events-none border-2 border-white">
                     <span>🔄</span> 新的一朵花
                 </button>
@@ -305,7 +333,7 @@
                 pooeAnswered: false, 
                 pooeTriggered: false,
                 devMode: false,
-                newFlowerTimer: null // 控制新花按鈕延遲的計時器
+                newFlowerTimer: null 
             };
             
             let els = {};
@@ -323,19 +351,19 @@
 
             const coordData = {
                 ovary: [
-                    {x: 399, y: 408}, {x: 399, y: 408}, // Frame 1, 2
-                    {x: 399, y: 408}, // Frame 3
-                    {x: 402, y: 400}, // Frame 4
-                    {x: 415, y: 399}, // Frame 5
-                    {x: 433, y: 396}, // Frame 6
-                    {x: 442, y: 396}, // Frame 7
-                    {x: 450, y: 395}, // Frame 8
-                    {x: 464, y: 395}, // Frame 9
-                    {x: 477, y: 396}, // Frame 10
-                    {x: 495, y: 390}, // Frame 11
-                    {x: 508, y: 387}, // Frame 12
-                    {x: 521, y: 386}, // Frame 13
-                    {x: 534, y: 378}  // Frame 14
+                    {x: 399, y: 408}, {x: 399, y: 408}, 
+                    {x: 399, y: 408}, 
+                    {x: 402, y: 400}, 
+                    {x: 415, y: 399}, 
+                    {x: 433, y: 396}, 
+                    {x: 442, y: 396}, 
+                    {x: 450, y: 395}, 
+                    {x: 464, y: 395}, 
+                    {x: 477, y: 396}, 
+                    {x: 495, y: 390}, 
+                    {x: 508, y: 387}, 
+                    {x: 521, y: 386}, 
+                    {x: 534, y: 378}  
                 ]
             };
 
@@ -527,7 +555,6 @@
                 els.pooeMemory.classList.remove('hidden');
                 setTimeout(() => els.pooeMemory.classList.replace('opacity-0', 'opacity-100'), 50);
 
-                // 【標點符號魔力修改】改成「讓我們看下去！」
                 customAlert("請繼續向右拖曳拉桿，觀察後續變化！", "讓我們看下去！");
             }
 
@@ -570,7 +597,6 @@
                     }
                 });
 
-                // --- ★ 按鈕與提示分鏡錯開 (延遲機制) ---
                 if (state.exactFrame >= 13.8) {
                     if (state.pooeAnswered) {
                         els.finalCheckToast.style.transform = 'translateY(0)';
@@ -584,7 +610,7 @@
                                 els.newFlowerBtn.style.opacity = '1';
                                 els.newFlowerBtn.style.pointerEvents = 'auto';
                             }
-                        }, 1200); // 延遲 1.2 秒後再跳出「新的一朵花」大按鈕
+                        }, 1200); 
                     }
                 } else {
                     if (state.newFlowerTimer) {
@@ -598,7 +624,6 @@
                     els.finalCheckToast.style.transform = 'translateY(-20px)';
                     els.finalCheckToast.style.opacity = '0';
                 }
-                // ----------------------------------------
 
                 const growthRatio = Math.max(0, Math.min(1, (state.exactFrame - 3.0) / 11.0)); 
                 const seedVisibility = state.exactFrame > 2.0 ? Math.min(1, (state.exactFrame - 2.0)) : 0;
@@ -643,7 +668,6 @@
                     const abortImg = els.seedImgsAbort[i];
 
                     const dynamicSize = isFertilized ? (18 + 67 * growthRatio) : (12 + 8 * growthRatio);
-                    // ★ 將文字字籤移到左上角 (中心點減去半徑與適當偏移)
                     const lblX = curX - dynamicSize * 0.4 - 5;
                     const lblY = curY - dynamicSize * 0.4 - 5;
 
