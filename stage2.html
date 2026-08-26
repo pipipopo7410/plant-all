@@ -62,14 +62,15 @@
         /* ★ 修改點 3：將圖表尺寸改為比例縮放，避免在窄螢幕互撞 */
         #vertical-charts {
             position: absolute; right: 4%; bottom: 8%; 
-            width: min(380px, 42%); height: min(340px, 48%);
+            width: clamp(260px, 42%, 380px); /* 確保圖表不會無極限縮小，至少保持 260px */
+            height: clamp(240px, 48%, 340px);
             background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(4px);
             border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); border: 1px solid #e2e8f0;
             display: flex; justify-content: space-around; align-items: flex-end; 
             padding: clamp(10px, 2%, 22px) clamp(8px, 1.5%, 18px); box-sizing: border-box; z-index: 20;
             transition: opacity 0.5s;
         }
-        .v-bar-container { width: clamp(28px, 10%, 48px); height: clamp(120px, 60%, 210px); background: #e2e8f0; border-radius: 8px; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end;}
+        .v-bar-container { width: clamp(24px, 10%, 48px); height: clamp(100px, 60%, 210px); background: #e2e8f0; border-radius: 8px; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end;}
         .v-bar { width: 100%; transition: height 0.3s ease; }
 
         ::-webkit-scrollbar { width: 6px; }
@@ -84,6 +85,30 @@
             }
             #left-sidebar { height: auto; }
             #stage-wrapper { min-height: 0; }
+        }
+
+        /* ★ 修改點 5：左側面板內部文字與間距自適應 (解決擠壓換行與數值重疊) */
+        @media (max-width: 1180px) {
+            .panel-block { padding: 12px !important; }
+            #left-sidebar .gap-16 { gap: 1.5rem !important; } /* 大幅縮小滑桿的垂直間距 */
+            
+            /* 將濕度後面的補充說明強制斷行，避免把外框撐破 */
+            #val-vol { display: block !important; margin-left: 0 !important; margin-top: 4px !important; line-height: 1 !important; }
+            
+            /* 讓右下角圖表內的文字也跟著稍微縮小 */
+            #vertical-charts .text-\\[18px\\] { font-size: 14px !important; }
+            #vertical-charts .text-\\[15px\\] { font-size: 12px !important; }
+        }
+
+        /* 專門針對「橫式平板」擠壓狀態的終極字體縮小 (801px ~ 1180px) */
+        @media (max-width: 1180px) and (min-width: 801px) {
+            #stoma-text, #rate-text { 
+                font-size: 2rem !important; /* 將超大的 5xl (48px) 縮小到 32px，保證不重疊！ */
+                line-height: 2.25rem !important; 
+            }
+            #left-sidebar .text-sm { font-size: 0.75rem !important; } /* 標籤文字縮為 12px */
+            #left-sidebar .text-xs { font-size: 0.65rem !important; }  
+            .weather-btn { padding: 8px 0 !important; font-size: 0.75rem !important; }
         }
     </style>
 </head>
@@ -197,7 +222,7 @@
                             <div class="text-[18px] font-bold text-slate-600 mb-3 flex flex-col items-center">
                                 <span>體內水分</span>
                             </div>
-                            <div class="bg-transparent relative flex justify-center items-center" style="width:150px; height: 240px;">
+                            <div class="bg-transparent relative flex justify-center items-center w-full" style="height: clamp(100px, 60%, 240px);">
                                 <!-- ★ 全新重繪的茂密大樹，絕對不變形 -->
                                 <svg viewBox="0 0 100 120" class="absolute bottom-0 w-full h-full drop-shadow-lg" preserveAspectRatio="xMidYMax meet">
                                     <path d="M 50 5 C 30 5 20 15 20 30 C 5 35 5 55 18 60 C 15 70 25 75 35 70 L 43 65 C 43 85 38 105 30 115 L 70 115 C 62 105 57 85 57 65 L 65 70 C 75 75 85 70 82 60 C 95 55 95 35 80 30 C 80 15 70 5 50 5 Z" fill="#e2e8f0"/>
