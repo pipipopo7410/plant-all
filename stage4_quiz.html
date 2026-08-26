@@ -6,19 +6,26 @@
     <title>植物總複習 - 階段四：評量題目</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* ★ 植入強制橫屏防護網 */
+        #orientation-warning { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: #0f172a; color: white; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; font-size: 1.5em; text-align: center; padding: 20px; box-sizing: border-box; }
+        @media (orientation: portrait) { #orientation-warning { display: flex; } }
+
+        /* ★ 修改點 1：改用 100dvh 避免行動裝置被位址列吃掉高度 */
         body, html { 
-            margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; 
+            margin: 0; padding: 0; width: 100vw; height: 100dvh; overflow: hidden; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             background-color: #f8fafc; 
         }
         
         #global-layout { display: flex; flex-direction: column; width: 100%; height: 100%; }
 
+        /* ★ 修改點 2：導入與前幾關一致的 clamp 彈性網格，讓出中央畫布空間 */
         #app-container { 
             display: grid; 
-            grid-template-columns: clamp(320px, 25vw, 400px) 1fr; 
-            gap: 20px; 
-            width: 100%; flex: 1; min-height: 0; padding: 20px; box-sizing: border-box; 
+            grid-template-columns: clamp(240px, 24vw, 320px) minmax(0, 1fr); 
+            gap: clamp(10px, 1.5vw, 20px); 
+            width: 100%; flex: 1; min-height: 0; 
+            padding: clamp(10px, 1.5vw, 20px); box-sizing: border-box; 
         }
 
         #left-sidebar { display: flex; flex-direction: column; gap: 15px; height: 100%; }
@@ -111,9 +118,23 @@
             background: #e2e8f0; border-radius: 50%; color: #64748b; font-size: 12px; font-weight: bold;
         }
         #close-exp-btn:hover { background: #cbd5e1; color: #334155; }
+
+        /* ★ 修改點 3：側邊欄與題目標題的文字自適應微調 */
+        @media (max-width: 1180px) {
+            .panel-block { padding: 12px !important; }
+            #left-sidebar .text-5xl { font-size: 2.5rem !important; line-height: 1 !important; }
+            .option-btn { padding: 8px 12px !important; font-size: 0.9rem !important; margin-bottom: 6px !important; }
+            #quiz-question-banner { padding: 16px 20px !important; min-height: 90px !important; }
+            #question-text { font-size: 1.1rem !important; }
+        }
     </style>
 </head>
 <body class="select-none text-slate-800">
+
+    <!-- ★ 強制橫屏防護罩 -->
+    <div id="orientation-warning" class="font-sans tracking-wider">
+        🔄<br><br>請將裝置旋轉為<b class="text-rose-400 mx-1">橫向模式</b>以進行課程互動。
+    </div>
 
     <div id="global-layout">
         
@@ -151,7 +172,6 @@
                     <div id="status-title" class="text-sm font-bold text-slate-400 mb-2 transition-colors">當前題號</div>
                     <div class="flex items-baseline gap-1 text-emerald-600 mb-4 transition-transform" id="status-number-container">
                         <span class="text-5xl font-black" id="quiz-current-q">1</span>
-                        <!-- 總題數更新為 6 題 -->
                         <span class="text-xl font-bold text-slate-400">/ 6</span>
                     </div>
                     
