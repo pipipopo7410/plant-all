@@ -10,7 +10,6 @@
         #orientation-warning { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: #0f172a; color: white; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; font-size: 1.5em; text-align: center; padding: 20px; box-sizing: border-box; }
         @media (orientation: portrait) { #orientation-warning { display: flex; } }
 
-        /* 改用 100dvh 對抗位址列 */
         body, html { 
             margin: 0; padding: 0; width: 100vw; height: 100dvh; overflow: hidden; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -19,7 +18,6 @@
         
         #global-layout { display: flex; flex-direction: column; width: 100%; height: 100%; }
 
-        /* 彈性網格與自適應間距 */
         #app-container { 
             display: grid; 
             grid-template-columns: clamp(240px, 25vw, 360px) minmax(0, 1fr); 
@@ -35,20 +33,17 @@
             display: flex; flex-direction: column; min-height: 0; 
         }
 
-        /* ★ 右側舞台防禦：加入 min-height: 0 確保圖片不會把題目擠出螢幕 */
         #stage-wrapper {
             position: relative; display: flex; flex-direction: column; justify-content: flex-start; align-items: center;
             width: 100%; height: 100%; border-radius: 16px; overflow: hidden;
             background: white; box-shadow: 0 15px 40px rgba(0,0,0,0.12); padding: 0; min-height: 0;
         }
         
-        /* 圖片容器也必須加上 min-height: 0 讓它知道退讓 */
         #quiz-image-container {
             width: 100%; flex: 1; min-height: 0; display: flex; justify-content: center; align-items: center;
             background-color: #f1f5f9; position: relative; overflow: hidden;
         }
         
-        /* 圖片柔邊效果 */
         .quiz-img, .dual-img-half img {
             max-width: 100%; max-height: 100%; object-fit: contain; position: absolute;
             -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 65%, rgba(0,0,0,0) 100%);
@@ -71,14 +66,13 @@
         }
         .dual-img-half img { position: relative; }
 
-        /* ★ 題目橫幅：加入 flex-shrink: 0 保證其空間絕對不被壓縮 */
+        /* ★ 題目橫幅：改為底邊框，並保持 flex-shrink: 0 */
         #quiz-question-banner {
-            width: 100%; background: white; border-top: 2px solid #e2e8f0;
+            width: 100%; background: white; border-bottom: 2px solid #e2e8f0;
             padding: clamp(10px, 1.5vh, 20px) clamp(16px, 2vw, 32px); box-sizing: border-box; z-index: 20;
             flex-shrink: 0; 
         }
 
-        /* ★ 選項按鈕全面壓縮：將字體與間距收縮，保證四個選項絕對放得下 */
         .option-btn {
             width: 100%; text-align: left; padding: clamp(6px, 1.2vh, 12px) 12px; margin: 0;
             border: 2px solid #e2e8f0; border-radius: 10px; background: white;
@@ -157,7 +151,6 @@
             
             <div id="left-sidebar">
                 
-                <!-- 【第一塊：單元模式，大幅瘦身】 -->
                 <div class="panel-block flex-shrink-0 px-3 py-3">
                     <div class="text-slate-800 font-extrabold text-[13px] tracking-wider border-b pb-1 mb-2 text-center">單元模式</div>
                     <div class="grid grid-cols-2 gap-1.5">
@@ -168,7 +161,6 @@
                     </div>
                 </div>
 
-                <!-- 【第二塊：題號區塊，改為左右水平排列，字體降級，極限壓扁】 -->
                 <div class="panel-block flex-shrink-0 flex flex-col items-center justify-center py-2 px-3 relative gap-1.5">
                     <div class="flex items-center justify-between w-full px-2">
                         <div id="status-title" class="text-[12px] font-bold text-slate-400 transition-colors">當前題號</div>
@@ -185,7 +177,6 @@
                     </button>
                 </div>
 
-                <!-- 【第三塊：選項區塊，拔除捲軸機制，自動彈性撐滿剩下的所有空間】 -->
                 <div class="panel-block flex-1 flex flex-col bg-slate-50 border-slate-200 justify-between p-3">
                     <div class="text-[13px] font-extrabold text-slate-700 mb-1.5 border-b border-slate-200 pb-1 flex-shrink-0">請選擇正確答案：</div>
                     <div id="quiz-options-container" class="flex flex-col flex-1 justify-around gap-1.5"></div>
@@ -194,6 +185,13 @@
 
             <div id="stage-wrapper">
                 
+                <!-- ★ 將題目區塊移至圖片區塊之上，符合先看題再看圖的閱讀動線 -->
+                <div id="quiz-question-banner">
+                    <h2 id="question-text" class="text-[1.1rem] font-bold text-slate-800 leading-relaxed">
+                        載入題目中...
+                    </h2>
+                </div>
+
                 <div id="quiz-image-container">
                     
                     <!-- 提示與解析卡片 -->
@@ -208,7 +206,6 @@
                         </p>
                     </div>
 
-                    <!-- ★ 修復大小寫：改回小寫 mt02.png 與 mt16.png -->
                     <!-- Q1 -->
                     <div id="q1-dual" class="dual-img-container active">
                         <div class="dual-img-half"><img src="./mt02.png" alt="水蜜桃開花"></div>
@@ -249,12 +246,6 @@
 
                 </div>
 
-                <div id="quiz-question-banner">
-                    <h2 id="question-text" class="text-[1.1rem] font-bold text-slate-800 leading-relaxed">
-                        載入題目中...
-                    </h2>
-                </div>
-
             </div>
         </div>
     </div>
@@ -265,7 +256,8 @@
                 {
                     id: 1,
                     targetImgId: 'q1-dual',
-                    question: "水蜜桃切開後中央只有一顆堅硬的果核。關於水蜜桃的花朵構造與果實發育，下列敘述何者錯誤？",
+                    /* ★ HTML 標籤注入：將「錯誤」兩字以深紅色、底線、粗體醒目提示 */
+                    question: "水蜜桃切開後中央只有一顆堅硬的果核。關於水蜜桃的花朵構造與果實發育，下列敘述何者<span class='text-rose-600 font-black underline decoration-rose-500 underline-offset-4 mx-0.5'>錯誤</span>？",
                     options: [
                         "花朵的子房內部通常只有 1 顆胚珠",
                         "多汁的果肉是由「子房壁」發育而來",
@@ -389,7 +381,8 @@
                 const q = questions[index];
                 
                 elCurrentQ.textContent = index + 1;
-                elQuestionText.textContent = q.question;
+                /* ★ 使用 innerHTML 以渲染 Tailwind HTML 標籤 */
+                elQuestionText.innerHTML = q.question;
                 
                 document.querySelectorAll('.quiz-img, .dual-img-container').forEach(img => {
                     img.classList.remove('active');
