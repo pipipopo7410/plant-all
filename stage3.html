@@ -3,11 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>葉片微觀生態沙盒 (2點鐘完美可逆弧形版 - 夜間機制優化)</title>
+    <title>葉片微觀生態沙盒 (神級拖曳優化版)</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/index.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mobile-drag-drop@2.3.0-rc.2/scroll-behaviour.min.js"></script>
     
     <style>
         :root { 
@@ -16,9 +14,7 @@
             --text-day: #333; 
             --text-night: #e0e0e0; 
 
-            /* =========================================
-               【CSS 絕對中樞變數定錨系統】
-               ========================================= */
+            /* 【CSS 絕對中樞變數定錨系統】 */
             --box-c-x: 28%;  
             --box-c-y: 20%;  
             --box-m-x: 75%;  
@@ -54,12 +50,15 @@
             --xylem-bot-y: 55.0%;
         }
         
+        /* ★ 強制橫屏防護網 */
+        #orientation-warning { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: #0f172a; color: white; z-index: 99999; flex-direction: column; justify-content: center; align-items: center; font-size: 1.5em; text-align: center; padding: 20px; box-sizing: border-box; }
+        @media (orientation: portrait) { #orientation-warning { display: flex; } }
+
         html, body { 
             width: 100vw; height: 100dvh; overflow: hidden; margin: 0; padding: 0; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             background: var(--bg-day); color: var(--text-day); transition: background 1s, color 1s; 
-            touch-action: none;
-            display: flex; flex-direction: column; 
+            touch-action: none; display: flex; flex-direction: column; 
         }
         body.night-mode { background: var(--bg-night); color: var(--text-night); }
         
@@ -77,10 +76,17 @@
         body.night-mode h1 { color: #81C784; }
 
         .molecule-bank { display: flex; gap: clamp(8px, 1vw, 12px); }
-        .sphere { border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; cursor: grab; user-select: none; box-shadow: 2px 3px 6px rgba(0,0,0,0.3), inset -2px -2px 6px rgba(0,0,0,0.2); transition: transform 0.2s; touch-action: none; }
-        .sphere:hover { transform: scale(1.1); }
         
-        /* ★ 修改點：全面縮小頂部倉庫分子尺寸，騰出垂直空間 */
+        /* ★ 拖曳分子圖卡：移除 native draggable，支援自定義觸控 */
+        .sphere { 
+            border-radius: 50%; display: flex; justify-content: center; align-items: center; 
+            font-weight: bold; cursor: grab; user-select: none; 
+            box-shadow: 2px 3px 6px rgba(0,0,0,0.3), inset -2px -2px 6px rgba(0,0,0,0.2); 
+            transition: transform 0.2s; touch-action: none; /* 防止滑動干擾拖曳 */
+        }
+        .sphere:hover { transform: scale(1.05); }
+        .sphere:active { cursor: grabbing; transform: scale(0.95); }
+        
         .mol-h2o { width: 44px; height: 44px; font-size: 0.85em; background: radial-gradient(circle at 30% 30%, #e1f5fe, #29b6f6); color: #01579b; }
         .mol-co2 { width: 44px; height: 44px; font-size: 0.85em; background: radial-gradient(circle at 30% 30%, #fffde7, #fbc02d); color: #795548; }
         .mol-o2 { width: 44px; height: 44px; font-size: 0.85em; background: radial-gradient(circle at 30% 30%, #ffcdd2, #e53935); color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
@@ -107,7 +113,6 @@
             box-shadow: inset 0 0 15px rgba(0,0,0,0.15);
         }
 
-        /* ★ 修改點：強制鎖死 4:3 比例，且背景圖嚴格拉伸貼合畫布，保證靶區不位移 */
         #stage { 
             position: relative; aspect-ratio: 4 / 3; width: 100%; height: auto;
             max-width: 100%; max-height: 100%; flex: 0 0 auto;
@@ -118,7 +123,6 @@
         body.night-mode #stage { filter: brightness(0.5) contrast(1.1); }
         #lighting-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(255, 255, 200, 0.36) 0%, transparent 100%); pointer-events: none; z-index: 1; transition: background 0.3s ease; }
         
-        /* ★ 修改點：將原本的 px 大小全部轉為 %，徹底拔除 transform: scale() */
         .stoma-gate { position: absolute; width: 8.5%; height: 6%; border-radius: 50%; background: rgba(0, 0, 0, 0.4); box-shadow: inset 0 2px 6px rgba(0,0,0,0.6); z-index: 5; transform: translate(-50%, -50%); transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
         body.night-mode #stoma1, body.night-mode #stoma2 { height: 0.6%; width: 10.5%; background: rgba(0, 0, 0, 0.85); box-shadow: none; }
         
@@ -126,16 +130,14 @@
         #stoma2 { left: var(--stoma2-x); top: var(--stoma2-y); }
         #stoma3 { left: var(--stoma3-x); top: var(--stoma3-y); }
 
+        /* ★ 徹底移除內部元件的 scale()，讓 D&D 座標判定 100% 精準 */
         #starch-deposit { 
             position: absolute; left: var(--starch-x); top: var(--starch-y); 
-            width: 12.5%; height: 16.6%; 
-            border-radius: 50%;
+            width: 12.5%; height: 16.6%; border-radius: 50%;
             background: radial-gradient(circle at 30% 30%, #f5e1d5, #8d6e63); 
             box-shadow: inset -3px -3px 8px rgba(0,0,0,0.3), 3px 3px 8px rgba(0,0,0,0.2);
             display: flex; justify-content: center; align-items: center; 
-            z-index: 3; 
-            transform: translate(-50%, -50%); 
-            pointer-events: none; opacity: 0; transition: opacity 0.5s ease;
+            z-index: 3; transform: translate(-50%, -50%); pointer-events: none; opacity: 0; transition: opacity 0.5s ease;
             color: white; font-weight: bold; font-size: clamp(12px, 1.5vw, 1.2em); text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
         }
 
@@ -154,8 +156,7 @@
 
         #btn-unlock-resp-overlay { 
             position: absolute; left: var(--box-m-x); top: var(--box-m-y); 
-            width: 18.75%; height: 15%; 
-            transform: translate(-50%, -50%);
+            width: 18.75%; height: 15%; transform: translate(-50%, -50%);
             background: rgba(80, 80, 80, 0.85); color: #ccc; border: 2px solid #555; border-radius: 12px; 
             font-weight: bold; font-size: clamp(11px, 1.2vw, 1em); z-index: 20; display: flex; flex-direction: column; 
             align-items: center; justify-content: center; text-align: center; line-height: 1.4; pointer-events: none; transition: all 0.5s; backdrop-filter: blur(2px); 
@@ -177,7 +178,6 @@
         #btn-daynight { flex: 1; max-width: 250px; min-width: 200px; padding: 12px 20px; cursor: pointer; font-weight: bold; font-size: 1.1em; background: #1a237e; color: white; border: none; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: all 0.2s; text-align: center; }
         #btn-daynight:active { transform: scale(0.95); }
 
-        /* ★ 修改點：流動分子微縮，避免在窄螢幕看起來過於擁擠 */
         .flow-particle { position: absolute; z-index: 10; pointer-events: none; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; box-shadow: 2px 2px 4px rgba(0,0,0,0.3); transform: translate(-50%, -50%); transition: opacity 0.2s ease, transform 0.2s ease; }
         .p-o2 { width: 30px; height: 30px; font-size: 0.75em; background: radial-gradient(circle at 30% 30%, #ffcdd2, #e53935); color: white; }
         .p-co2 { width: 34px; height: 34px; font-size: 0.75em; background: radial-gradient(circle at 30% 30%, #fffde7, #fbc02d); color: #795548; }
@@ -186,93 +186,28 @@
         
         .p-energy { background: none; box-shadow: none; font-size: 6em; text-shadow: 0 0 20px #FFEB3B, 0 0 40px #FF9800, 0 0 60px #FF5722; }
 
-        /* 動畫軌跡維持，移除原本暴力的 scale(--scale-factor) 變數，改以原始比例縮放 */
         @keyframes transpirationFlow { 0% { left: var(--xylem-top-x); top: var(--xylem-top-y); opacity: 0; transform: translate(-50%, -50%) scale(0.4); } 15% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); } 70% { left: var(--stoma1-x); top: var(--stoma1-y); opacity: 0.8; transform: translate(-50%, -50%) scale(1); } 100% { left: calc(var(--stoma1-x) - 10%); top: calc(var(--stoma1-y) + 15%); opacity: 0; transform: translate(-50%, -50%) scale(0.5); } }
-
         @keyframes h2oToChloro { 0% { left: var(--xylem-bot-x); top: var(--xylem-bot-y); opacity: 0; transform: translate(-50%, -50%) scale(0.4); } 10% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 90% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { left: var(--c-left-x); top: var(--c-left-y); opacity: 0; transform: translate(-50%, -50%) scale(1); } }
         @keyframes co2ToChloro { 0% { left: var(--stoma2-co2-x); top: var(--stoma2-y); opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 10% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 90% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { left: var(--c-left-x); top: var(--c-left-y); opacity: 0; transform: translate(-50%, -50%) scale(1); } }
         @keyframes chloroToStomaO2 { 0% { left: var(--c-right-x); top: var(--c-right-y); opacity: 0; transform: translate(-50%, -50%) scale(1); } 10% { opacity: 1; } 90% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { left: var(--stoma2-o2-x); top: var(--stoma2-y); opacity: 0; transform: translate(-50%, -50%) scale(0.5); } }
         @keyframes chloroToCenterGlu { 0% { left: var(--c-right-x); top: var(--c-right-y); opacity: 0; transform: translate(-50%, -50%) scale(1); } 10% { opacity: 1; } 90% { opacity: 1; } 100% { left: var(--starch-x); top: var(--starch-y); opacity: 0; transform: translate(-50%, -50%) scale(0.8); } }
-        
-        @keyframes forwardArcO2 { 
-            0%   { left: var(--c-right-x); top: var(--c-right-y); opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 
-            10%  { left: 51.7%; top: 35.1%; opacity: 1; transform: translate(-50%, -50%) scale(1); } 
-            20%  { left: 54.7%; top: 34.1%; } 
-            30%  { left: 57.1%; top: 34.0%; } 
-            40%  { left: 58.8%; top: 34.9%; } 
-            50%  { left: 59.9%; top: 36.8%; } 
-            60%  { left: 60.3%; top: 39.5%; } 
-            70%  { left: 60.1%; top: 43.2%; } 
-            80%  { left: 59.2%; top: 47.9%; } 
-            90%  { left: 57.7%; top: 53.5%; opacity: 1; transform: translate(-50%, -50%) scale(1); } 
-            100% { left: var(--m-left-x); top: var(--m-y); opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 
-        }
-        @keyframes forwardArcGlu { 
-            0%   { left: var(--c-right-x); top: var(--c-right-y); opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 
-            10%  { left: 52.2%; top: 34.7%; opacity: 1; transform: translate(-50%, -50%) scale(1); } 
-            20%  { left: 55.8%; top: 33.4%; } 
-            30%  { left: 58.6%; top: 33.2%; } 
-            40%  { left: 60.7%; top: 34.0%; } 
-            50%  { left: 62.1%; top: 35.8%; } 
-            60%  { left: 62.8%; top: 38.6%; } 
-            70%  { left: 62.8%; top: 42.4%; } 
-            80%  { left: 62.1%; top: 47.2%; } 
-            90%  { left: 60.6%; top: 53.1%; opacity: 1; transform: translate(-50%, -50%) scale(1); } 
-            100% { left: var(--m-right-x); top: var(--m-y); opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 
-        }
-
-        @keyframes returnArcCO2 { 
-            0%   { left: var(--m-left-x); top: var(--m-y); opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 
-            10%  { left: 57.7%; top: 53.5%; opacity: 1; transform: translate(-50%, -50%) scale(1); } 
-            20%  { left: 59.2%; top: 47.9%; } 
-            30%  { left: 60.1%; top: 43.2%; } 
-            40%  { left: 60.3%; top: 39.5%; } 
-            50%  { left: 59.9%; top: 36.8%; } 
-            60%  { left: 58.8%; top: 34.9%; } 
-            70%  { left: 57.1%; top: 34.0%; } 
-            80%  { left: 54.7%; top: 34.1%; } 
-            90%  { left: 51.7%; top: 35.1%; opacity: 1; transform: translate(-50%, -50%) scale(1); } 
-            100% { left: var(--c-right-x); top: var(--c-right-y); opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 
-        }
-        @keyframes returnArcH2O { 
-            0%   { left: var(--m-right-x); top: var(--m-y); opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 
-            10%  { left: 60.6%; top: 53.1%; opacity: 1; transform: translate(-50%, -50%) scale(1); } 
-            20%  { left: 62.1%; top: 47.2%; } 
-            30%  { left: 62.8%; top: 42.4%; } 
-            40%  { left: 62.8%; top: 38.6%; } 
-            50%  { left: 62.1%; top: 35.8%; } 
-            60%  { left: 60.7%; top: 34.0%; } 
-            70%  { left: 58.6%; top: 33.2%; } 
-            80%  { left: 55.8%; top: 33.4%; } 
-            90%  { left: 52.2%; top: 34.7%; opacity: 1; transform: translate(-50%, -50%) scale(1); } 
-            100% { left: var(--c-right-x); top: var(--c-right-y); opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 
-        }
-
+        @keyframes forwardArcO2 { 0% { left: var(--c-right-x); top: var(--c-right-y); opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 10% { left: 51.7%; top: 35.1%; opacity: 1; transform: translate(-50%, -50%) scale(1); } 20% { left: 54.7%; top: 34.1%; } 30% { left: 57.1%; top: 34.0%; } 40% { left: 58.8%; top: 34.9%; } 50% { left: 59.9%; top: 36.8%; } 60% { left: 60.3%; top: 39.5%; } 70% { left: 60.1%; top: 43.2%; } 80% { left: 59.2%; top: 47.9%; } 90% { left: 57.7%; top: 53.5%; opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { left: var(--m-left-x); top: var(--m-y); opacity: 0; transform: translate(-50%, -50%) scale(0.5); } }
+        @keyframes forwardArcGlu { 0% { left: var(--c-right-x); top: var(--c-right-y); opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 10% { left: 52.2%; top: 34.7%; opacity: 1; transform: translate(-50%, -50%) scale(1); } 20% { left: 55.8%; top: 33.4%; } 30% { left: 58.6%; top: 33.2%; } 40% { left: 60.7%; top: 34.0%; } 50% { left: 62.1%; top: 35.8%; } 60% { left: 62.8%; top: 38.6%; } 70% { left: 62.8%; top: 42.4%; } 80% { left: 62.1%; top: 47.2%; } 90% { left: 60.6%; top: 53.1%; opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { left: var(--m-right-x); top: var(--m-y); opacity: 0; transform: translate(-50%, -50%) scale(0.5); } }
+        @keyframes returnArcCO2 { 0% { left: var(--m-left-x); top: var(--m-y); opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 10% { left: 57.7%; top: 53.5%; opacity: 1; transform: translate(-50%, -50%) scale(1); } 20% { left: 59.2%; top: 47.9%; } 30% { left: 60.1%; top: 43.2%; } 40% { left: 60.3%; top: 39.5%; } 50% { left: 59.9%; top: 36.8%; } 60% { left: 58.8%; top: 34.9%; } 70% { left: 57.1%; top: 34.0%; } 80% { left: 54.7%; top: 34.1%; } 90% { left: 51.7%; top: 35.1%; opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { left: var(--c-right-x); top: var(--c-right-y); opacity: 0; transform: translate(-50%, -50%) scale(0.5); } }
+        @keyframes returnArcH2O { 0% { left: var(--m-right-x); top: var(--m-y); opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 10% { left: 60.6%; top: 53.1%; opacity: 1; transform: translate(-50%, -50%) scale(1); } 20% { left: 62.1%; top: 47.2%; } 30% { left: 62.8%; top: 42.4%; } 40% { left: 62.8%; top: 38.6%; } 50% { left: 62.1%; top: 35.8%; } 60% { left: 60.7%; top: 34.0%; } 70% { left: 58.6%; top: 33.2%; } 80% { left: 55.8%; top: 33.4%; } 90% { left: 52.2%; top: 34.7%; opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { left: var(--c-right-x); top: var(--c-right-y); opacity: 0; transform: translate(-50%, -50%) scale(0.5); } }
         @keyframes stomaToMitoO2 { 0% { left: var(--stoma3-x); top: var(--stoma3-y); opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 10% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 90% { opacity: 1; } 100% { left: var(--m-left-x); top: var(--m-y); opacity: 0; transform: translate(-50%, -50%) scale(1); } }
         @keyframes starchToMitoGlu { 0% { left: var(--starch-x); top: var(--starch-y); opacity: 0; transform: translate(-50%, -50%) scale(0.8); } 10% { opacity: 1; } 90% { opacity: 1; } 100% { left: var(--m-right-x); top: var(--m-y); opacity: 0; } }
         @keyframes mitoToStomaCO2 { 0% { left: var(--m-left-x); top: var(--m-y); opacity: 0; transform: translate(-50%, -50%) scale(1); } 10% { opacity: 1; } 90% { opacity: 1; transform: translate(-50%, -50%) scale(0.6); } 100% { left: var(--stoma3-x); top: var(--stoma3-y); opacity: 0; transform: translate(-50%, -50%) scale(0.5); } }
         @keyframes mitoToCellH2O { 0% { left: var(--m-right-x); top: var(--m-y); opacity: 0; transform: scale(1); } 10% { opacity: 1; } 90% { opacity: 1; } 100% { left: calc(var(--m-right-x) + 15%); top: calc(var(--m-y) + 20%); opacity: 0; transform: translate(-50%, -50%) scale(0.7); } }
-        
         @keyframes energyBurst { 0% { left: var(--m-x); top: var(--m-y); opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 15% { opacity: 1; transform: translate(-50%, calc(-50% - 60px)) scale(1.2); } 95% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, calc(-50% - 200px)) scale(1); } }
-
-        /* ★ 修改點：針對 iPad 直式 (小於 800px) 自動轉為上下排列，並解除 touch-action 防滑動限制 */
-        @media (max-width: 800px) {
-            html, body { touch-action: auto; overflow-y: auto; height: auto; min-height: 100dvh; }
-            #app-container {
-                grid-template-columns: 1fr;
-                grid-template-rows: auto auto auto auto;
-                overflow-y: auto; padding: 10px;
-            }
-            #top-bar { grid-column: 1 / -1; grid-row: 1; }
-            #inventory-panel { grid-column: 1 / -1; grid-row: 2; height: auto; }
-            #stage-wrapper { grid-column: 1 / -1; grid-row: 3; aspect-ratio: 4 / 3; height: auto; }
-            #dashboard { grid-column: 1 / -1; grid-row: 4; flex-direction: column; gap: 15px; }
-            .controls { max-width: 100%; width: 100%; }
-            #btn-daynight { max-width: 100%; width: 100%; }
-        }
     </style>
 </head>
 <body>
+
+<!-- 強制橫屏防護罩 -->
+<div id="orientation-warning" class="font-sans tracking-wider">
+    🔄<br><br>請將裝置旋轉為<b class="text-rose-400 mx-1">橫向模式</b>以進行課程互動。
+</div>
 
 <!-- 全站統一導覽列 -->
         <nav id="nav-tabs-bar" class="w-full bg-slate-900 shadow-md h-14 flex items-center justify-between px-6 z-[100] flex-shrink-0 select-none">
@@ -293,10 +228,10 @@
     <div id="top-bar">
         <h1>🌱 葉片微觀生態沙盒</h1>
         <div class="molecule-bank" id="molecule-bank">
-            <div class="sphere mol-h2o" draggable="true" id="h2o">H₂O</div>
-            <div class="sphere mol-co2" draggable="true" id="co2">CO₂</div>
-            <div class="sphere mol-o2" draggable="true" id="o2">O₂</div>
-            <div class="sphere mol-glu" draggable="true" id="glu">葡萄糖</div>
+            <div class="sphere mol-h2o" id="h2o">H₂O</div>
+            <div class="sphere mol-co2" id="co2">CO₂</div>
+            <div class="sphere mol-o2" id="o2">O₂</div>
+            <div class="sphere mol-glu" id="glu">葡萄糖</div>
         </div>
     </div>
 
@@ -342,9 +277,7 @@
 </div>
 
 <script>
-    MobileDragDrop.polyfill({ dragImageTranslateOverride: MobileDragDrop.scrollBehaviourDragImageTranslateOverride });
-    window.addEventListener('touchmove', function() {}, {passive: false});
-
+    // 徹底拋棄 HTML5 Drag & Drop，改用自製的絕對精準 Pointer Events 拖曳引擎
     let currentStage = 1; 
     let isNight = false; 
     let chloroReady = false, mitoReady = false;
@@ -366,40 +299,86 @@
     const boxMito = document.getElementById('box-mito');
     const stage = document.getElementById('stage');
     const starchDeposit = document.getElementById('starch-deposit');
-
-    document.querySelectorAll('.molecule-bank .sphere').forEach(mol => {
-        mol.addEventListener('dragstart', e => e.dataTransfer.setData('text', e.target.id));
-    });
-
     const chloroDrop = document.getElementById('chloro-drop');
     const mitoDrop = document.getElementById('mito-drop');
-    chloroDrop.addEventListener('dragover', e => e.preventDefault());
-    mitoDrop.addEventListener('dragover', e => e.preventDefault());
 
-    chloroDrop.addEventListener('drop', e => {
-        e.preventDefault(); const id = e.dataTransfer.getData('text');
-        if (id === 'h2o' || id === 'co2') {
-            const original = document.getElementById(id);
-            if(!original) return;
-            const el = original.cloneNode(true);
-            el.id = id + '-' + Date.now(); 
-            /* ★ 放進框框後的分子大小微調，不會顯得太擠 */
-            el.style.width = '30px'; el.style.height = '30px'; el.style.fontSize = '0.65em'; el.removeAttribute('draggable');
-            chloroDrop.appendChild(el); checkConditions();
-        }
+    // ==========================================
+    // ★ 神級拖曳引擎 (Pointer Events)
+    // ==========================================
+    let customDrag = { active: false, type: null, ghost: null, offsetX: 0, offsetY: 0 };
+
+    document.querySelectorAll('.molecule-bank .sphere').forEach(mol => {
+        // 防止選取與系統原生拖曳干擾
+        mol.ondragstart = () => false;
+        
+        mol.addEventListener('pointerdown', function(e) {
+            e.preventDefault();
+            const rect = this.getBoundingClientRect();
+            customDrag.type = this.id;
+
+            // 創造殘影圖卡，直接掛在 body 上，完全不受內部 CSS 縮放影響
+            customDrag.ghost = this.cloneNode(true);
+            customDrag.ghost.id = 'ghost-' + Date.now();
+            customDrag.ghost.style.position = 'fixed';
+            customDrag.ghost.style.left = `${rect.left}px`;
+            customDrag.ghost.style.top = `${rect.top}px`;
+            customDrag.ghost.style.margin = '0';
+            customDrag.ghost.style.zIndex = '99999';
+            customDrag.ghost.style.pointerEvents = 'none'; // 讓游標穿透殘影，準確打中下方的框框
+            customDrag.ghost.style.opacity = '0.85';
+            document.body.appendChild(customDrag.ghost);
+
+            // 計算手指點擊處與圖卡左上角的偏移量，實現零距離跟手
+            customDrag.offsetX = e.clientX - rect.left;
+            customDrag.offsetY = e.clientY - rect.top;
+            customDrag.active = true;
+            this.style.opacity = '0.4'; // 原物件變淡
+        });
     });
 
-    mitoDrop.addEventListener('drop', e => {
-        e.preventDefault(); const id = e.dataTransfer.getData('text');
-        if (id === 'o2' || id === 'glu') {
-            const original = document.getElementById(id);
-            if(!original) return;
-            const el = original.cloneNode(true);
-            el.id = id + '-' + Date.now();
-            el.style.width = '30px'; el.style.height = '30px'; el.style.fontSize = '0.65em'; el.removeAttribute('draggable');
-            mitoDrop.appendChild(el); checkConditions();
+    window.addEventListener('pointermove', function(e) {
+        if (!customDrag.active || !customDrag.ghost) return;
+        e.preventDefault();
+        customDrag.ghost.style.left = `${e.clientX - customDrag.offsetX}px`;
+        customDrag.ghost.style.top = `${e.clientY - customDrag.offsetY}px`;
+    }, {passive: false});
+
+    window.addEventListener('pointerup', function(e) {
+        if (!customDrag.active) return;
+        customDrag.active = false;
+        
+        document.getElementById(customDrag.type).style.opacity = '1'; // 恢復原物件
+
+        // 碰撞判定：直接用實際渲染的矩形方塊去比對，絕對不會錯位
+        const ghostRect = customDrag.ghost.getBoundingClientRect();
+        const chloroRect = boxChloro.getBoundingClientRect();
+        const mitoRect = boxMito.getBoundingClientRect();
+
+        const isOverlap = (r1, r2) => {
+            return !(r1.right < r2.left || r1.left > r2.right || r1.bottom < r2.top || r1.top > r2.bottom);
+        };
+
+        if (isOverlap(ghostRect, chloroRect) && (customDrag.type === 'h2o' || customDrag.type === 'co2')) {
+            addMolToZone(customDrag.type, chloroDrop);
+        } else if (isOverlap(ghostRect, mitoRect) && (customDrag.type === 'o2' || customDrag.type === 'glu') && currentStage === 2) {
+            addMolToZone(customDrag.type, mitoDrop);
         }
+
+        customDrag.ghost.remove();
+        customDrag.ghost = null;
+        customDrag.type = null;
     });
+
+    function addMolToZone(type, zone) {
+        if (zone.innerHTML.includes(type)) return; 
+        const original = document.getElementById(type);
+        const el = original.cloneNode(true);
+        el.id = type + '-' + Date.now(); 
+        el.style.width = '26px'; el.style.height = '26px'; el.style.fontSize = '0.55em'; 
+        el.style.margin = '2px'; el.style.cursor = 'default';
+        zone.appendChild(el); 
+        checkConditions();
+    }
 
     function checkConditions() {
         const cItems = chloroDrop.innerHTML; const mItems = mitoDrop.innerHTML;
@@ -589,17 +568,11 @@
         if (photoRate > 0) {
             photoCycleCounter++;
             triggerPhotosynthesisWave(0);
-            
-            if (photoRate >= 40) {
-                triggerPhotosynthesisWave(555);
-            }
+            if (photoRate >= 40) triggerPhotosynthesisWave(555);
         }
-
         if (respRate > 0 && isNight && currentStage === 2) {
             respTick++;
-            if (respTick % 5 === 0) {
-                triggerRespirationWave();
-            }
+            if (respTick % 5 === 0) triggerRespirationWave();
         }
     }, 1111);
 
