@@ -7,7 +7,7 @@
         const style = document.createElement('style');
         style.id = 'global-responsive-styles';
         style.innerHTML = `
-            /* 1. 導覽列：平板尺寸時不滑動，自動縮小字體、內距與按鈕間距 */
+            /* 1. 導覽列：平板尺寸時不滑動，自動縮小字體與按鈕間距 */
             @media (max-width: 1180px) {
                 #nav-tabs-bar { padding: 0 12px !important; gap: 4px !important; }
                 #nav-tabs-bar .text-xl { font-size: 1.1rem !important; }
@@ -20,20 +20,23 @@
                 #nav-phylo-badge span:last-child { display: none; } 
             }
 
-            /* 2. 底圖防裁切：全域強制所有作為背景的圖檔完整顯示，並貼齊底部 */
-            #canvas img.absolute.inset-0.w-full.h-full {
-                object-fit: contain !important;
-                object-position: bottom !important;
-            }
-
-            /* 3. 面板防遮擋：全域針對所有分頁的兩側控制面板進行縮放 */
+            /* 2. 實作「上下壓縮」概念：鎖定主畫面比例，解決切邊與變形 */
             @media (max-width: 1180px) {
-                /* 抓取右側的浮動面板 (如環境參數、階段四的篩選器) */
+                #canvas {
+                    align-self: center !important; /* 取消預設的垂直拉伸，讓畫布垂直置中 (上下留白) */
+                    aspect-ratio: 16 / 10 !important; /* 強制鎖定為 16:10 寬螢幕比例，徹底解決變形！ */
+                    height: auto !important; 
+                    max-height: 96% !important; /* 避免極端情況下頂到上下邊緣 */
+                    border-radius: 16px !important; /* 讓上下留白的畫布有圓角，看起來像獨立圖板 */
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important; /* 增加質感陰影 */
+                    border: 1px solid #e2e8f0 !important;
+                }
+
+                /* 3. 面板防遮擋：針對兩側浮動的控制面板進行等比例縮小 */
                 #canvas > div.absolute[class*="right-"] {
                     transform: scale(0.75);
                     transform-origin: top right;
                 }
-                /* 抓取左側的浮動面板 (如長條圖、階段四的提示板) */
                 #canvas > div.absolute[class*="left-"] {
                     transform: scale(0.75);
                     transform-origin: bottom left;
@@ -46,7 +49,9 @@
     // 立即啟動全域排版修正
     injectGlobalResponsiveStyles();
 
-    // 1. 判斷當前頁面階段
+    // -----------------------------------------------------
+    // 下方為原有的轉場動畫與導覽邏輯，完全保留
+    // -----------------------------------------------------
     const path = window.location.pathname.toLowerCase();
     let currentStage = 1;
     
@@ -265,7 +270,6 @@
         
         const badge = document.createElement('div');
         badge.id = 'nav-phylo-badge';
-        // 加入 shrink-0 避免在平板上被擠壓
         badge.className = 'cursor-pointer mx-3 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-600 text-emerald-300 text-[13px] font-bold flex items-center gap-1.5 hover:bg-slate-700 transition-colors shadow-md animate-pulse shrink-0';
         badge.innerHTML = `<span>${stageInfo[stage].badge}</span><span class="text-[10px] bg-emerald-600/20 text-emerald-200 px-1.5 py-0.5 rounded ml-1 border border-emerald-500/30">查看分類圖</span>`;
         badge.addEventListener('click', () => showPhylogeneticTree(stage, true));
