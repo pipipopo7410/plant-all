@@ -1,4 +1,51 @@
 (function() {
+    // ==========================================
+    // 全域響應式排版修正引擎 (套用於所有分頁)
+    // ==========================================
+    function injectGlobalResponsiveStyles() {
+        if (document.getElementById('global-responsive-styles')) return;
+        const style = document.createElement('style');
+        style.id = 'global-responsive-styles';
+        style.innerHTML = `
+            /* 1. 導覽列：平板尺寸時不滑動，自動縮小字體、內距與按鈕間距 */
+            @media (max-width: 1180px) {
+                #nav-tabs-bar { padding: 0 12px !important; gap: 4px !important; }
+                #nav-tabs-bar .text-xl { font-size: 1.1rem !important; }
+                #nav-tabs-bar .font-black { font-size: 1rem !important; letter-spacing: 0 !important; }
+                #global-nav-buttons { gap: 4px !important; }
+                .nav-btn { padding: 4px 8px !important; font-size: 13px !important; letter-spacing: -0.5px; }
+                
+                /* 縮小範圍徽章，並隱藏次要提示文字以節省空間 */
+                #nav-phylo-badge { padding: 4px 8px !important; font-size: 11px !important; margin-left: 4px !important; }
+                #nav-phylo-badge span:last-child { display: none; } 
+            }
+
+            /* 2. 底圖防裁切：全域強制所有作為背景的圖檔完整顯示，並貼齊底部 */
+            #canvas img.absolute.inset-0.w-full.h-full {
+                object-fit: contain !important;
+                object-position: bottom !important;
+            }
+
+            /* 3. 面板防遮擋：全域針對所有分頁的兩側控制面板進行縮放 */
+            @media (max-width: 1180px) {
+                /* 抓取右側的浮動面板 (如環境參數、階段四的篩選器) */
+                #canvas > div.absolute[class*="right-"] {
+                    transform: scale(0.75);
+                    transform-origin: top right;
+                }
+                /* 抓取左側的浮動面板 (如長條圖、階段四的提示板) */
+                #canvas > div.absolute[class*="left-"] {
+                    transform: scale(0.75);
+                    transform-origin: bottom left;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // 立即啟動全域排版修正
+    injectGlobalResponsiveStyles();
+
     // 1. 判斷當前頁面階段
     const path = window.location.pathname.toLowerCase();
     let currentStage = 1;
@@ -79,7 +126,7 @@
             btn.removeAttribute('onclick');
             
             if (btnStage === currentStage) {
-                // 更明顯的白底柔邊，無硬邊框，加上 relative z-10 確保陰影不被蓋住
+                // 當前高亮按鈕，移除發光硬邊，改用大範圍柔邊陰影
                 btn.className = "nav-btn px-4 py-1.5 rounded-lg text-[15px] font-black transition-all bg-white text-emerald-600 shadow-[0_0_20px_rgba(100,116,139,0.35)] pointer-events-none relative z-10";
             } else {
                 btn.className = "nav-btn px-4 py-1.5 rounded-lg text-sm font-bold text-slate-300 hover:bg-slate-800 transition-all";
@@ -218,7 +265,8 @@
         
         const badge = document.createElement('div');
         badge.id = 'nav-phylo-badge';
-        badge.className = 'cursor-pointer mx-3 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-600 text-emerald-300 text-[13px] font-bold flex items-center gap-1.5 hover:bg-slate-700 transition-colors shadow-md animate-pulse';
+        // 加入 shrink-0 避免在平板上被擠壓
+        badge.className = 'cursor-pointer mx-3 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-600 text-emerald-300 text-[13px] font-bold flex items-center gap-1.5 hover:bg-slate-700 transition-colors shadow-md animate-pulse shrink-0';
         badge.innerHTML = `<span>${stageInfo[stage].badge}</span><span class="text-[10px] bg-emerald-600/20 text-emerald-200 px-1.5 py-0.5 rounded ml-1 border border-emerald-500/30">查看分類圖</span>`;
         badge.addEventListener('click', () => showPhylogeneticTree(stage, true));
         
