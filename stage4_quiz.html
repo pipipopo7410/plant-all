@@ -6,11 +6,11 @@
     <title>植物總複習 - 階段四：評量題目</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* ★ 植入強制橫屏防護網 */
+        /* ★ 強制橫屏防護網 */
         #orientation-warning { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: #0f172a; color: white; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; font-size: 1.5em; text-align: center; padding: 20px; box-sizing: border-box; }
         @media (orientation: portrait) { #orientation-warning { display: flex; } }
 
-        /* ★ 修改點 1：改用 100dvh 避免行動裝置被位址列吃掉高度 */
+        /* 改用 100dvh 對抗位址列 */
         body, html { 
             margin: 0; padding: 0; width: 100vw; height: 100dvh; overflow: hidden; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -19,30 +19,39 @@
         
         #global-layout { display: flex; flex-direction: column; width: 100%; height: 100%; }
 
-        /* ★ 修改點 2：導入與前幾關一致的 clamp 彈性網格，讓出中央畫布空間 */
+        /* 彈性網格與自適應間距 */
         #app-container { 
             display: grid; 
-            grid-template-columns: clamp(240px, 24vw, 320px) minmax(0, 1fr); 
-            gap: clamp(10px, 1.5vw, 20px); 
-            width: 100%; flex: 1; min-height: 0; 
-            padding: clamp(10px, 1.5vw, 20px); box-sizing: border-box; 
+            grid-template-columns: clamp(240px, 25vw, 360px) minmax(0, 1fr); 
+            gap: clamp(12px, 1.5vw, 20px); 
+            width: 100%; flex: 1; min-height: 0; /* 這裡的 min-height: 0 是防止外層爆掉的關鍵 */
+            padding: clamp(12px, 1.5vw, 20px); box-sizing: border-box; 
         }
 
-        #left-sidebar { display: flex; flex-direction: column; gap: 15px; height: 100%; }
+        /* ★ 左側面板防禦：加入 min-height: 0 強迫內部產生卷軸而非超出螢幕 */
+        #left-sidebar { display: flex; flex-direction: column; gap: clamp(10px, 1vw, 15px); height: 100%; min-height: 0; }
         .panel-block {
             background: white; border: 1px solid #e2e8f0; border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05); padding: 20px;
-            display: flex; flex-direction: column;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); padding: clamp(12px, 1.5vw, 20px);
+            display: flex; flex-direction: column; min-height: 0; /* 確保選項區塊不會無限長大 */
         }
 
+        /* 選項容器：內容過多時自動產生捲軸 */
+        #quiz-options-container {
+            overflow-y: auto; 
+            padding-right: 4px; /* 留一點空間給捲軸 */
+        }
+
+        /* ★ 右側舞台防禦：加入 min-height: 0 確保圖片不會把題目擠出螢幕 */
         #stage-wrapper {
             position: relative; display: flex; flex-direction: column; justify-content: flex-start; align-items: center;
             width: 100%; height: 100%; border-radius: 16px; overflow: hidden;
-            background: white; box-shadow: 0 15px 40px rgba(0,0,0,0.12); padding: 0;
+            background: white; box-shadow: 0 15px 40px rgba(0,0,0,0.12); padding: 0; min-height: 0;
         }
         
+        /* 圖片容器也必須加上 min-height: 0 讓它知道退讓 */
         #quiz-image-container {
-            width: 100%; flex: 1; display: flex; justify-content: center; align-items: center;
+            width: 100%; flex: 1; min-height: 0; display: flex; justify-content: center; align-items: center;
             background-color: #f1f5f9; position: relative; overflow: hidden;
         }
         
@@ -69,13 +78,15 @@
         }
         .dual-img-half img { position: relative; }
 
+        /* ★ 題目橫幅：加入 flex-shrink: 0 保證其空間絕對不被壓縮 */
         #quiz-question-banner {
-            width: 100%; min-height: 120px; background: white; border-top: 2px solid #e2e8f0;
-            padding: 24px 32px; box-sizing: border-box; z-index: 20;
+            width: 100%; background: white; border-top: 2px solid #e2e8f0;
+            padding: clamp(12px, 1.5vw, 24px) clamp(16px, 2vw, 32px); box-sizing: border-box; z-index: 20;
+            flex-shrink: 0; 
         }
 
         .option-btn {
-            width: 100%; text-align: left; padding: 12px 16px; margin-bottom: 8px;
+            width: 100%; text-align: left; padding: clamp(8px, 1vw, 12px) 16px; margin-bottom: 8px;
             border: 2px solid #e2e8f0; border-radius: 12px; background: white;
             font-weight: 700; color: #475569; transition: all 0.2s; cursor: pointer;
             display: flex; align-items: center; gap: 10px;
@@ -90,7 +101,7 @@
         .option-btn.disabled { pointer-events: none; }
         
         .option-label { 
-            display: inline-flex; justify-content: center; align-items: center;
+            display: inline-flex; justify-content: center; align-items: center; flex-shrink: 0;
             width: 28px; height: 28px; background: #e2e8f0; border-radius: 6px; font-size: 14px; color: #64748b;
             text-decoration: none; 
         }
@@ -103,7 +114,7 @@
             transform: translate(-50%, -40%);
             max-width: 420px; width: 90%;
             background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px);
-            border: 2px solid #e2e8f0; border-radius: 16px; padding: 24px;
+            border: 2px solid #e2e8f0; border-radius: 16px; padding: clamp(16px, 2vw, 24px);
             box-shadow: 0 20px 40px rgba(0,0,0,0.2); opacity: 0;
             pointer-events: none; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 50;
         }
@@ -119,19 +130,16 @@
         }
         #close-exp-btn:hover { background: #cbd5e1; color: #334155; }
 
-        /* ★ 修改點 3：側邊欄與題目標題的文字自適應微調 */
+        /* 平板尺寸的微調 */
         @media (max-width: 1180px) {
-            .panel-block { padding: 12px !important; }
             #left-sidebar .text-5xl { font-size: 2.5rem !important; line-height: 1 !important; }
-            .option-btn { padding: 8px 12px !important; font-size: 0.9rem !important; margin-bottom: 6px !important; }
-            #quiz-question-banner { padding: 16px 20px !important; min-height: 90px !important; }
-            #question-text { font-size: 1.1rem !important; }
+            .option-btn { font-size: 0.9rem !important; margin-bottom: 6px !important; }
+            #question-text { font-size: 1.05rem !important; line-height: 1.4 !important;}
         }
     </style>
 </head>
 <body class="select-none text-slate-800">
 
-    <!-- ★ 強制橫屏防護罩 -->
     <div id="orientation-warning" class="font-sans tracking-wider">
         🔄<br><br>請將裝置旋轉為<b class="text-rose-400 mx-1">橫向模式</b>以進行課程互動。
     </div>
@@ -168,22 +176,22 @@
                     </div>
                 </div>
 
-                <div class="panel-block flex-shrink-0 flex flex-col items-center justify-center py-6 relative">
-                    <div id="status-title" class="text-sm font-bold text-slate-400 mb-2 transition-colors">當前題號</div>
-                    <div class="flex items-baseline gap-1 text-emerald-600 mb-4 transition-transform" id="status-number-container">
+                <div class="panel-block flex-shrink-0 flex flex-col items-center justify-center py-4 relative">
+                    <div id="status-title" class="text-sm font-bold text-slate-400 mb-1 transition-colors">當前題號</div>
+                    <div class="flex items-baseline gap-1 text-emerald-600 mb-2 transition-transform" id="status-number-container">
                         <span class="text-5xl font-black" id="quiz-current-q">1</span>
                         <span class="text-xl font-bold text-slate-400">/ 6</span>
                     </div>
                     
-                    <div class="flex gap-2 w-full justify-center px-4 mb-4" id="quiz-progress-dots"></div>
+                    <div class="flex gap-2 w-full justify-center px-4 mb-2" id="quiz-progress-dots"></div>
 
-                    <button id="btn-next-q" class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-[0_4px_15px_rgba(16,185,129,0.3)] transition-all text-base hidden">
+                    <button id="btn-next-q" class="w-full py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-[0_4px_15px_rgba(16,185,129,0.3)] transition-all text-base hidden mt-2">
                         下一題 ➡️
                     </button>
                 </div>
 
-                <div class="panel-block flex-1 flex flex-col bg-slate-50 border-slate-200 overflow-y-auto">
-                    <div class="text-[15px] font-extrabold text-slate-700 mb-4 border-b border-slate-200 pb-2">請選擇正確答案：</div>
+                <div class="panel-block flex-1 flex flex-col bg-slate-50 border-slate-200">
+                    <div class="text-[14px] font-extrabold text-slate-700 mb-3 border-b border-slate-200 pb-2 flex-shrink-0">請選擇正確答案：</div>
                     <div id="quiz-options-container" class="flex flex-col flex-1"></div>
                 </div>
             </div>
@@ -199,15 +207,16 @@
                             <span id="exp-icon">💡</span>
                             <span id="exp-title">觀念解析</span>
                         </div>
-                        <p id="exp-content" class="text-[15px] font-bold text-slate-700 leading-relaxed">
+                        <p id="exp-content" class="text-[14.5px] font-bold text-slate-700 leading-relaxed">
                             解析內容...
                         </p>
                     </div>
 
+                    <!-- ★ 修復大小寫：改回 mt02.png 與 mt16.png -->
                     <!-- Q1 -->
                     <div id="q1-dual" class="dual-img-container active">
-                        <div class="dual-img-half"><img src="./MT02.png" alt="水蜜桃開花"></div>
-                        <div class="dual-img-half"><img src="./MT16.png" alt="水蜜桃果實"></div>
+                        <div class="dual-img-half"><img src="./mt02.png" alt="水蜜桃開花"></div>
+                        <div class="dual-img-half"><img src="./mt16.png" alt="水蜜桃果實"></div>
                     </div>
                     
                     <!-- Q2 -->
@@ -245,7 +254,7 @@
                 </div>
 
                 <div id="quiz-question-banner">
-                    <h2 id="question-text" class="text-xl font-bold text-slate-800 leading-relaxed">
+                    <h2 id="question-text" class="text-[1.15rem] font-bold text-slate-800 leading-relaxed">
                         載入題目中...
                     </h2>
                 </div>
@@ -462,7 +471,7 @@
                             elBtnNext.classList.remove('hidden');
                         } else {
                             elBtnNext.innerHTML = '🎉 恭喜完成！開啟自由複習';
-                            elBtnNext.className = 'w-full py-3 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-black rounded-xl shadow-[0_4px_15px_rgba(245,158,11,0.4)] transition-all text-base animate-bounce mt-4';
+                            elBtnNext.className = 'w-full py-2.5 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-black rounded-xl shadow-[0_4px_15px_rgba(245,158,11,0.4)] transition-all text-base animate-bounce mt-2';
                             elBtnNext.classList.remove('hidden');
                         }
                     }
