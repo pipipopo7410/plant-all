@@ -7,40 +7,38 @@
         const style = document.createElement('style');
         style.id = 'global-responsive-styles';
         style.innerHTML = `
-            /* 1. 導覽列：平板尺寸時自動縮小字體與按鈕間距 */
+            /* 針對平板尺寸 (1180px 以下) 啟動強勢空間壓縮 */
             @media (max-width: 1180px) {
+                
+                /* 1. 導覽列：微幅縮小字體與按鈕間距，確保不換行 */
                 #nav-tabs-bar { padding: 0 12px !important; gap: 4px !important; }
                 #nav-tabs-bar .text-xl { font-size: 1.1rem !important; }
                 #nav-tabs-bar .font-black { font-size: 1rem !important; letter-spacing: 0 !important; }
                 #global-nav-buttons { gap: 4px !important; }
                 .nav-btn { padding: 4px 8px !important; font-size: 13px !important; letter-spacing: -0.5px; }
-                
                 #nav-phylo-badge { padding: 4px 8px !important; font-size: 11px !important; margin-left: 4px !important; }
                 #nav-phylo-badge span:last-child { display: none; } 
-            }
 
-            /* 2. 順應真實可視區 (Viewport)：依賴 object-contain 進行等比縮放，不強制裁切 */
-            @media (max-width: 1180px) {
-                /* 確保畫布有圓角與陰影質感，自然適應瀏覽器給予的空間 */
+                /* 2. 左側主面板：整體等比縮小 20%，強制讓出中央腹地 */
+                /* 抓取 main 的第一個子元素 (即所有分頁的左側操作列) */
+                main > div:first-child {
+                    zoom: 0.8 !important; 
+                }
+
+                /* 3. 畫布內的浮動視窗 (右上環境設定、左下長條圖)：整體等比縮小 25% */
+                /* 這樣浮動視窗就不會撞到中央的植物 */
+                #canvas > div.absolute {
+                    zoom: 0.75 !important;
+                }
+
+                /* 4. 中央底圖防裁切：順應真實可視區，自然貼合底部 */
                 #canvas {
                     border-radius: 12px !important; 
                     box-shadow: inset 0 0 20px rgba(0,0,0,0.03) !important;
                 }
-
-                /* 核心魔法：讓底圖永遠等比例完整顯示，並貼齊畫布最下方 */
                 #canvas img.absolute.inset-0.w-full.h-full {
                     object-fit: contain !important;
-                    object-position: bottom !important;
-                }
-
-                /* 3. 面板等比縮小：將兩側控制面板縮小至 80%，讓出中央視野 */
-                #canvas > div.absolute[class*="right-"] {
-                    transform: scale(0.8);
-                    transform-origin: top right;
-                }
-                #canvas > div.absolute[class*="left-"] {
-                    transform: scale(0.8);
-                    transform-origin: bottom left;
+                    object-position: center bottom !important;
                 }
             }
         `;
