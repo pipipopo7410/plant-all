@@ -6,7 +6,10 @@
     <title>植物總複習 - 階段四：豌豆的生殖與果實</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* ★ 修改點 1：改用 100dvh 避免行動裝置被位址列吃掉高度 */
+        /* 強制橫屏防護網 */
+        #orientation-warning { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: #0f172a; color: white; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; font-size: 1.5em; text-align: center; padding: 20px; box-sizing: border-box; }
+        @media (orientation: portrait) { #orientation-warning { display: flex; } }
+
         body, html { 
             margin: 0; padding: 0; width: 100vw; height: 100dvh; overflow: hidden; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -15,7 +18,6 @@
         
         #global-layout { display: flex; flex-direction: column; width: 100%; height: 100%; }
 
-        /* ★ 修改點 2：導入與 Stage 2,3,4 一致的 clamp 彈性網格，讓出中央畫布空間 */
         #app-container { 
             display: grid; 
             grid-template-columns: clamp(240px, 24vw, 320px) minmax(0, 1fr); 
@@ -41,17 +43,16 @@
         }
         input[type=range]::-webkit-slider-thumb:active { transform: scale(1.15); }
 
-        /* ★ 修改點 3：加入舞台防護罩 wrapper，解除高度綁架 */
         #stage-wrapper {
             position: relative; display: flex; justify-content: center; align-items: center;
             width: 100%; height: 100%; min-width: 0; min-height: 0; border-radius: 16px; overflow: hidden;
             background: white; box-shadow: 0 15px 40px rgba(0,0,0,0.12);
         }
         
-        /* ★ 修改點 4：鎖定比例 aspect-ratio，保證豌豆 SVG 座標與底圖絕對精準對齊 */
+        /* 移除衝突的 aspect-ratio 與固定百分比寬高，交由 JS handleResize 動態精準指派 */
         #stage { 
-            position: relative; aspect-ratio: 4 / 3; width: 100%; height: auto;
-            max-width: 100%; max-height: 100%; flex: 0 0 auto;
+            position: relative; 
+            flex-shrink: 0; 
             background: transparent; 
         }
         
@@ -85,31 +86,21 @@
             will-change: transform, opacity;
         }
 
-        /* ★ 修改點 5：側邊欄內部文字自適應 (解決擠壓換行與數值重疊) */
         @media (max-width: 1180px) {
             .panel-block { padding: 12px !important; }
             #left-sidebar .text-5xl { font-size: 2rem !important; line-height: 1 !important; }
             #left-sidebar .text-sm { font-size: 0.75rem !important; }
         }
-
-        /* ★ 修改點 6：針對 iPad 直式 (小於 800px) 自動轉為上下排列 */
-        @media (max-width: 800px) {
-            body, html { touch-action: auto; overflow-y: auto; height: auto; min-height: 100dvh; }
-            #app-container {
-                grid-template-columns: 1fr;
-                grid-template-rows: auto minmax(0, 1fr);
-                overflow-y: auto;
-            }
-            #left-sidebar { height: auto; }
-            #stage-wrapper { min-height: 55vh; }
-        }
     </style>
 </head>
 <body class="select-none text-slate-800">
 
+    <div id="orientation-warning" class="font-sans tracking-wider">
+        🔄<br><br>請將裝置旋轉為<b class="text-rose-400 mx-1">橫向模式</b>以進行課程互動。
+    </div>
+
     <div id="global-layout">
         
-       <!-- 全站統一導覽列 -->
         <nav id="nav-tabs-bar" class="w-full bg-slate-900 shadow-md h-14 flex items-center justify-between px-6 z-[100] flex-shrink-0 select-none">
             <div class="flex items-center gap-3">
                 <span class="text-xl">🌱</span>
